@@ -303,6 +303,7 @@ $internalConfig = array(
                 'ngT'                     => 'ngT',
                 'createAbsoluteUrl'       => 'LS_Twig_Extension::createAbsoluteUrl',/* Not in 3.X */
                 'createUrl'               => 'LS_Twig_Extension::createUrl',
+                'baseUrl'                 => 'LS_Twig_Extension::baseUrl',
                 'json_decode'             => 'LS_Twig_Extension::json_decode',
                 'json_encode'             => 'CJSON::encode',
                 'checkconditionFunction'  => 'checkconditionFunction',
@@ -427,6 +428,7 @@ $internalConfig = array(
                     'ngT',
                     'createAbsoluteUrl',
                     'createUrl',
+                    'baseUrl',
                     'json_decode',
                     'json_encode',
                     'strip_tags',

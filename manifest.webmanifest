@@ -1,0 +1,18 @@
+{
+  "name": "LimeSurvey",
+  "short_name": "LimeSurvey",
+  "description": "Take surveys online or on the go.",
+  "start_url": "./index.php",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#0d6efd",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "themes/survey/vanilla/files/logo.png",
+      "sizes": "1376x395",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
