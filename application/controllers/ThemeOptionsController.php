@@ -534,7 +534,7 @@ class ThemeOptionsController extends LSBaseController
             if ($theme === 'questiontheme') {
                 $templateFolder = App()->request->getPost('templatefolder');
                 if (strpos($templateFolder, "..") !== false) {
-                    throw new CHttpException(eT("Unsafe path"));
+                    throw new CHttpException(400, gT("Unsafe path"));
                 }
                 //$themeType is being sanitized inside getAbsolutePathForType
                 $themeType = App()->request->getPost('theme_type');
