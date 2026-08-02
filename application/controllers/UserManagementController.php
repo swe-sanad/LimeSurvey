@@ -8,6 +8,8 @@ use LimeSurvey\Models\Services\UserManager;
  */
 class UserManagementController extends LSBaseController
 {
+    use RenderErrorsTrait;
+
     /**
      * @return array
      **/
@@ -1747,26 +1749,6 @@ class UserManagementController extends LSBaseController
         SettingsUser::applyBaseSettings($iNewUID);
 
         return User::model()->findByPk($iNewUID)->attributes;
-    }
-
-    /**
-     * todo this should not be in a controller, find a better place for it (view)
-     *
-     *
-     * @param array $errors
-     *
-     * @return string $errorDiv
-     */
-    private function renderErrors(array $errors): string
-    {
-        $errorDiv = '<ul class="list-unstyled">';
-        foreach ($errors as $key => $error) {
-            foreach ($error as $errorMessages) {
-                $errorDiv .= '<li>' . print_r($errorMessages, true) . '</li>';
-            }
-        }
-        $errorDiv .= '</ul>';
-        return (string) $errorDiv;
     }
 
     /**

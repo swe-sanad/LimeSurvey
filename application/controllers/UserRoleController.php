@@ -2,6 +2,8 @@
 
 class UserRoleController extends LSBaseController
 {
+    use RenderErrorsTrait;
+
     /**
      * Run filters
      *
@@ -495,25 +497,6 @@ class UserRoleController extends LSBaseController
         }
 
         return $model;
-    }
-
-    /**
-     * Returns HTML fragment of errors
-     *
-     * @param array $errors
-     *
-     * @return string $errorDiv
-     */
-    private function renderErrors(array $errors): string
-    {
-        $errorDiv = '<ul class="list-unstyled">';
-        foreach ($errors as $key => $error) {
-            foreach ($error as $errormessages) {
-                $errorDiv .= '<li>' . print_r($errormessages, true) . '</li>';
-            }
-        }
-        $errorDiv .= '</ul>';
-        return $errorDiv;
     }
 
     /**

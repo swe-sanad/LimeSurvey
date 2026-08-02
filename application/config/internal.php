@@ -99,6 +99,7 @@ $internalConfig = array(
         'application.models.Traits.*',
         'application.helpers.*',
         'application.controllers.*',
+        'application.controllers.Traits.*',
         'application.modules.*',
         'yiistrap_fork.widgets.*',
         'yiistrap_fork.helpers.*',

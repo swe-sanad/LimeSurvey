@@ -373,9 +373,7 @@ class ThemeOptionsController extends LSBaseController
      */
     public function actionSetAdminTheme(string $sAdminThemeName)
     {
-        if (!Permission::model()->hasGlobalPermission('settings', 'update')) {
-            throw new CHttpException(403, gT("You do not have permission to access this page."));
-        }
+        $this->requireGlobalPermission('settings', 'update');
 
         $sAdmintheme = sanitize_paranoid_string($sAdminThemeName);
         SettingGlobal::setSetting('admintheme', $sAdmintheme);

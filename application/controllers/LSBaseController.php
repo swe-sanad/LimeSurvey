@@ -195,4 +195,43 @@ class LSBaseController extends LSYii_Controller
         ], true, false);
         return;
     }
+
+    /**
+     * Loads a survey by id and, optionally, checks the current user's survey
+     * permission on it. Captures the repeated
+     * "load survey -> 404 if missing -> hasSurveyPermission -> 403" triad.
+     *
+     * @param int $surveyId
+     * @param string|null $permission Survey permission area (e.g. 'surveycontent'), or null to skip the check
+     * @param string $crud CRUD action to check (default 'read')
+     * @return Survey
+     * @throws CHttpException 404 if the survey does not exist, 403 if the permission check fails
+     */
+    protected function requireSurvey($surveyId, $permission = null, $crud = 'read')
+    {
+        $oSurvey = Survey::model()->findByPk($surveyId);
+        if (empty($oSurvey)) {
+            throw new CHttpException(404, gT("Invalid survey ID"));
+        }
+        if ($permission !== null && !Permission::model()->hasSurveyPermission($oSurvey->sid, $permission, $crud)) {
+            throw new CHttpException(403, gT("No permission"));
+        }
+        return $oSurvey;
+    }
+
+    /**
+     * Checks the current user's global permission and throws a 403 if missing.
+     * Captures the repeated global-permission-or-403 check.
+     *
+     * @param string $area
+     * @param string $crud
+     * @return void
+     * @throws CHttpException 403 if the permission check fails
+     */
+    protected function requireGlobalPermission($area, $crud)
+    {
+        if (!Permission::model()->hasGlobalPermission($area, $crud)) {
+            throw new CHttpException(403, gT("You do not have permission to access this page."));
+        }
+    }
 }
