@@ -128,6 +128,7 @@ class RenderMultipleShortText extends QuestionBaseRenderer
                     'suffix'                 => $this->suffix,
                     'sInputContainerWidth'   => $this->widthArray['sInputContainerWidth'],
                     'sLabelWidth'            => $this->widthArray['sLabelWidth'],
+                    'mandatory'              => $this->oQuestion->mandatory,
                     );
 
                     //sLabelWidth
@@ -151,6 +152,7 @@ class RenderMultipleShortText extends QuestionBaseRenderer
                     'suffix'                 => $this->suffix,
                     'sInputContainerWidth'   => $this->widthArray['sInputContainerWidth'],
                     'sLabelWidth'            => $this->widthArray['sLabelWidth'],
+                    'mandatory'              => $this->oQuestion->mandatory,
                     );
             }
 

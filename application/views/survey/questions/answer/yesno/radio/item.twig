@@ -19,6 +19,7 @@
                 name="{{ name }}"
                 id="answer{{ name }}Y"
                 value="Y"
+                {% if mandatory is defined and mandatory == 'Y' %}aria-required="true"{% endif %}
                 {{ yChecked }}
         />
         <label for="answer{{ name }}Y" class="control-label answer-text">
@@ -33,6 +34,7 @@
                 name="{{ name }}"
                 id="answer{{ name }}N"
                 value="N"
+                {% if mandatory is defined and mandatory == 'Y' %}aria-required="true"{% endif %}
                 {{ nChecked }}
         />
         <label for="answer{{ name }}N" class="control-label answer-text">

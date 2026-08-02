@@ -22,6 +22,7 @@
             name="{{ name }}"
             id="answer{{ name }}F"
             value="F"
+            {% if mandatory is defined and mandatory == 'Y' %}aria-required="true"{% endif %}
             {{ fChecked }}
         />
         <label for="answer{{ name }}F" class="control-label radio-label">
@@ -36,6 +37,7 @@
             name="{{ name }}"
             id="answer{{ name }}M"
             value="M"
+            {% if mandatory is defined and mandatory == 'Y' %}aria-required="true"{% endif %}
             {{ mChecked }}
         />
 
