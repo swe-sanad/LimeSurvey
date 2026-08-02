@@ -38,6 +38,7 @@ $pageSize = intval(Yii::app()->user->getState('pageSize', Yii::app()->params['de
                     $this->widget('ext.admin.grid.CLSGridView', array(//done
                         'dataProvider' => $model->search(),
                         'id' => 'assessments-grid',
+                        'htmlOptions' => ['class' => 'table-responsive grid-view-ls'],
                         'columns' => $model->getColumns(),
                         'filter' => $model,
                         'emptyText' => gT('No customizable entries found.'),

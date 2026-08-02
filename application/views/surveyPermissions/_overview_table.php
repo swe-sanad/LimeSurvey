@@ -6,6 +6,7 @@
 /* @var $oSurveyPermissions \LimeSurvey\Models\Services\SurveyPermissions */
 
 ?>
+<div class="table-responsive">
 <table class='surveysecurity table table-striped table-hover'>
     <thead>
     <tr>
@@ -89,4 +90,5 @@
     // ?>
     </tbody>
 </table>
+</div>
 

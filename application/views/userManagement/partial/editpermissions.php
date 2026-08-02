@@ -10,6 +10,7 @@ Yii::app()->getController()->renderPartial(
     <div class="row ls-space margin top-5 bottom-5 hidden" id="UserManagement--errors">
     </div>
     <input type='hidden' name='userid' value='<?php echo (isset($oUser) ? $oUser->uid : ''); ?>' />
+    <div class="table-responsive">
     <table id='UserManagement--userpermissions-table' class='activecell table table-striped'>
         <thead>
             <tr>
@@ -78,6 +79,7 @@ Yii::app()->getController()->renderPartial(
         <?php endforeach; ?>
 
     </table>
+    </div>
     <div class="row ls-space margin top-25">
        <?php if (safecount(Permission::model()->getUserRole($oUser->uid)) > 0) : ?>
             <?php

@@ -118,6 +118,7 @@ echo viewHelper::getViewTestTag('surveyParticipantsIndex');
                         'dataProvider'          => $model->search(),
                         'filter'                => $model,
                         'id'                    => 'token-grid',
+                        'htmlOptions'           => ['class' => 'table-responsive grid-view-ls'],
                         'emptyText'             => gT('No survey participants found.'),
                         'massiveActionTemplate' => $massiveAction,
                         'summaryText'           => gT('Displaying {start}-{end} of {count} result(s).') . ' ' . sprintf(
@@ -140,6 +141,7 @@ echo viewHelper::getViewTestTag('surveyParticipantsIndex');
                         'dataProvider'          => $emptyGridDataProvider,
                         'filter'                => $emptyGridFilter,
                         'id'                    => 'token-grid',
+                        'htmlOptions'           => ['class' => 'table-responsive grid-view-ls'],
                         'emptyText'             => gT('No survey participants found.'),
                         'massiveActionTemplate' => $massiveAction,
                         'columns'               => $emptyGridColumns,

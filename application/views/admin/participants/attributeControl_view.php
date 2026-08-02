@@ -14,6 +14,7 @@ echo viewHelper::getViewTestTag('participantsAttributeControl');
         <?php
         $this->widget('application.extensions.admin.grid.CLSGridView', [
             'id' => 'list_attributes',
+            'htmlOptions' => ['class' => 'table-responsive grid-view-ls'],
             'dataProvider' => $model->search(),
             'columns' => $model->columns,
             'filter' => $model,

@@ -32,6 +32,7 @@ echo viewHelper::getViewTestTag('listSurveys');
                     <?php
                     $this->widget('application.extensions.admin.grid.CLSGridView', [
                         'id'               => 'surveygroups--gridview',
+                        'htmlOptions'      => ['class' => 'table-responsive grid-view-ls'],
                         'dataProvider'     => $groupModel->search(),
                         'lsAfterAjaxUpdate'          => [],
                         'columns'          => $groupModel->columns,

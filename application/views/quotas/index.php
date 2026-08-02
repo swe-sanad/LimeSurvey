@@ -37,6 +37,7 @@ echo viewHelper::getViewTestTag('surveyQuotas');
                     <?php $this->widget('application.extensions.admin.grid.CLSGridView', [
                         'dataProvider'          => $oDataProvider,
                         'id'                    => 'quota-grid',
+                        'htmlOptions'           => ['class' => 'table-responsive grid-view-ls'],
                         'ajaxUpdate'            => 'quota-grid',
                         'lsAfterAjaxUpdate'     => ['onQuotaOpenAction();', 'bindListItemclick();'],
                         'emptyText'             => gT('No quotas'),
