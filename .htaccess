@@ -49,3 +49,8 @@ RedirectMatch 403 ^/(.*/)?tmp/runtime/
 <IfModule mod_negotiation.c>
     Options -MultiViews
 </IfModule>
+
+# Serve the PWA web app manifest with the correct MIME type
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+</IfModule>
