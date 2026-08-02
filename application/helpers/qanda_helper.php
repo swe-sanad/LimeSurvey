@@ -1012,7 +1012,8 @@ function do_shortfreetext($ia)
             'numberonly' => $numberonly,
             'inputsize'              => $inputsize,
             'placeholder'            => $placeholder,
-            'withColumn'             => $withColumn
+            'withColumn'             => $withColumn,
+            'mandatory'              => $ia[6],
         );
         $answer = doRender('/survey/questions/answer/shortfreetext/text/item', $itemDatas, true);
     }

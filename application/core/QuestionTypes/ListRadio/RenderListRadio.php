@@ -85,6 +85,7 @@ class RenderListRadio extends QuestionBaseRenderer
                 'hasOther' => $this->hasOther,
                 'otherPosition' => $this->otherPosition,
                 'answerBeforeOther' => $this->answerBeforeOther,
+                'mandatory' => $this->oQuestion->mandatory,
                 ), true);
             if ($this->hasOther && $this->otherPosition == self::OTHER_POS_AFTER_OPTION && $this->answerBeforeOther == $oAnswer->code) {
                 $aRows[] = $this->addOtherRow();

@@ -75,6 +75,9 @@
     {% endblock %}
     <body class=" {{ aSurveyInfo.class.body }} font-{{  aSurveyInfo.options.font }} lang-{{aSurveyInfo.languagecode}} {{aSurveyInfo.surveyformat}} {% if( aSurveyInfo.options.brandlogo == "on") %}brand-logo{%endif%}" {{ aSurveyInfo.attr.body }} data-thememode="{{ aSurveyInfo.options.thememode ? aSurveyInfo.options.thememode : 'light' }}">
 
+        {# Skip link: lets keyboard/screen-reader users bypass the nav and jump straight to the survey content #}
+        <a class="visually-hidden-focusable" href="#{{ aSurveyInfo.id.outerframe }}">{{ gT('Skip to main content') }}</a>
+
         {# Notice if emcache is on or off, used by tests. #}
         {% if aSurveyInfo.emcache %}
             <span style="display: none;" id="__emcache_debug" value="on"></span>
@@ -90,6 +93,8 @@
         {% endblock %}       
 
         {# Ajaxify cannot handle an element that is a direct child of body, so => create simple wrapper section #}
+        {# NB: role="main" lives on the #outerframe content div (see outerframe.twig), not here, so the
+           main landmark maps to the question content rather than the nav bar + progress chrome above it. #}
         <article>
 
             <div id="{{ aSurveyInfo.id.dynamicreload }}">
@@ -131,7 +136,9 @@
 
         </article>
         {% block footer %}
-            {{ include('./subviews/footer/footer.twig') }}
+            <footer role="contentinfo">
+                {{ include('./subviews/footer/footer.twig') }}
+            </footer>
         {% endblock %}
         {% block pjaxend %}
             <div id="bottomScripts" class="script-container">
