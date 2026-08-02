@@ -1657,7 +1657,7 @@ class QuestionAdministrationController extends LSBaseController
     public function actionGetGeneralSettingsHTML(int $surveyId, string $questionType, ?string $questionTheme = null, $questionId = null)
     {
         if (empty($questionType)) {
-            throw new CHttpException(405, 'Internal error: No question type');
+            throw new CHttpException(405, gT('Internal error: No question type'));
         }
         // TODO: Difference between create and update permissions?
         if (!Permission::model()->hasSurveyPermission($surveyId, 'surveycontent', 'update')) {
@@ -1862,7 +1862,7 @@ class QuestionAdministrationController extends LSBaseController
     public function actionGetAdvancedSettingsHTML(int $surveyId, string $questionType, ?string $questionTheme = null, $questionId = null)
     {
         if (empty($questionType)) {
-            throw new CHttpException(405, 'Internal error: No question type');
+            throw new CHttpException(405, gT('Internal error: No question type'));
         }
         // @todo Difference between create and update permissions?
         if (!Permission::model()->hasSurveyPermission($surveyId, 'surveycontent', 'update')) {
@@ -1904,7 +1904,7 @@ class QuestionAdministrationController extends LSBaseController
     public function actionGetExtraOptionsHTML(int $surveyId, string $questionType, $questionId = null)
     {
         if (empty($questionType)) {
-            throw new CHttpException(405, 'Internal error: No question type');
+            throw new CHttpException(405, gT('Internal error: No question type'));
         }
         // @todo Difference between create and update permissions?
         if (!Permission::model()->hasSurveyPermission($surveyId, 'surveycontent', 'update')) {

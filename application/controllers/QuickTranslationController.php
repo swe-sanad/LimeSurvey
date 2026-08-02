@@ -62,7 +62,7 @@ class QuickTranslationController extends LSBaseController
         /* existing + read (survey) already checked in SurveyCommonAction : existing use model : then if surveyid is not valid : return a 404 */
         /* survey : read OK, not survey:translations:read … */
         if (!Permission::model()->hasSurveyPermission($surveyid, 'translations', 'read')) {
-            throw new CHttpException(401, "401 Unauthorized");
+            throw new CHttpException(401, gT("401 Unauthorized"));
         }
 
         $oSurvey = Survey::model()->findByPk($surveyid);
@@ -450,7 +450,7 @@ class QuickTranslationController extends LSBaseController
 
         //todo: check if googletranslate is activated ...
         if (!Permission::model()->hasSurveyPermission($surveyid, 'translations', 'read')) {
-            throw new CHttpException(401, "401 Unauthorized");
+            throw new CHttpException(401, gT("401 Unauthorized"));
         }
         if (Yii::app()->request->isPostRequest) {
             echo self::translateGoogleApi();

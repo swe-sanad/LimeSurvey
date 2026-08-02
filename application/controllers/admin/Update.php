@@ -220,7 +220,7 @@ class Update extends DynamicSurveyCommonAction
 
         if (Permission::model()->hasGlobalPermission('superadmin')) {
             SettingGlobal::model()->deleteByPk('update_key');
-            App()->setFlashMessage('Your update key has been removed');
+            App()->setFlashMessage(gT('Your update key has been removed'));
             App()->getController()->redirect(App()->getController()->createUrl('admin/update/sa/managekey'));
         }
     }

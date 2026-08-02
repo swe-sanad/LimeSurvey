@@ -3,19 +3,19 @@
 /* @var $model Surveymenu */
 
 $this->breadcrumbs = array(
-    'Surveymenus' => array('index'),
+    gT('Surveymenus') => array('index'),
     $model->title => array('view','id' => $model->id),
-    'Update',
+    gT('Update'),
 );
 
 $this->menu = array(
-    array('label' => 'List Surveymenu', 'url' => array('index')),
-    array('label' => 'Create Surveymenu', 'url' => array('create')),
-    array('label' => 'View Surveymenu', 'url' => array('view', 'id' => $model->id)),
-    array('label' => 'Manage Surveymenu', 'url' => array('admin')),
+    array('label' => gT('List Surveymenu'), 'url' => array('index')),
+    array('label' => gT('Create Surveymenu'), 'url' => array('create')),
+    array('label' => gT('View Surveymenu'), 'url' => array('view', 'id' => $model->id)),
+    array('label' => gT('Manage Surveymenu'), 'url' => array('admin')),
 );
 ?>
 
-<h1>Update Surveymenu <?php echo $model->id; ?></h1>
+<h1><?php echo sprintf(gT('Update Surveymenu %s'), $model->id); ?></h1>
 
 <?php $this->renderPartial('_form', array('model' => $model)); ?>

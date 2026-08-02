@@ -88,7 +88,7 @@ class SurveysController extends LSYii_Controller
         } elseif ($error) {
             $this->spitOutHtmlError($error);
         } else {
-            throw new CHttpException(404, 'Page not found.');
+            throw new CHttpException(404, gT('Page not found.'));
         }
     }
 

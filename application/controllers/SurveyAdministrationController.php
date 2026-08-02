@@ -326,7 +326,7 @@ class SurveyAdministrationController extends LSBaseController
     public function actionGetAllSurveyIds()
     {
         if (!Yii::app()->request->isAjaxRequest) {
-            throw new CHttpException(400, 'Invalid request');
+            throw new CHttpException(400, gT('Invalid request'));
         }
 
         $model = new Survey('search');

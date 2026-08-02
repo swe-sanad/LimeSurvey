@@ -52,7 +52,7 @@
     </div>
 
     <div class="row buttons">
-        <?php echo CHtml::submitButton($model->isNewRecord ? 'Create' : 'Save'); ?>
+        <?php echo CHtml::submitButton($model->isNewRecord ? gT('Create') : gT('Save')); ?>
     </div>
 
 <?php $this->endWidget(); ?>

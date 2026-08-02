@@ -3,13 +3,13 @@
 /* @var $model TutorialEntry */
 
 $this->breadcrumbs = array(
-    'Tutorial Entries' => array('index'),
-    'Manage',
+    gT('Tutorial Entries') => array('index'),
+    gT('Manage'),
 );
 
 $this->menu = array(
-    array('label' => 'List TutorialEntry', 'url' => array('index')),
-    array('label' => 'Create TutorialEntry', 'url' => array('create')),
+    array('label' => gT('List TutorialEntry'), 'url' => array('index')),
+    array('label' => gT('Create TutorialEntry'), 'url' => array('create')),
 );
 
 Yii::app()->clientScript->registerScript('search', "
@@ -26,14 +26,13 @@ $('.search-form form').submit(function(){
 ");
 ?>
 
-<h1>Manage Tutorial Entries</h1>
+<h1><?php echo gT('Manage Tutorial Entries'); ?></h1>
 
 <p>
-You may optionally enter a comparison operator (<b>&lt;</b>, <b>&lt;=</b>, <b>&gt;</b>, <b>&gt;=</b>, <b>&lt;&gt;</b>
-or <b>=</b>) at the beginning of each of your search values to specify how the comparison should be done.
+<?php echo gT('You may optionally enter a comparison operator (<b>&lt;</b>, <b>&lt;=</b>, <b>&gt;</b>, <b>&gt;=</b>, <b>&lt;&gt;</b> or <b>=</b>) at the beginning of each of your search values to specify how the comparison should be done.', 'unescaped'); ?>
 </p>
 
-<?php echo CHtml::link('Advanced Search', '#', array('class' => 'search-button')); ?>
+<?php echo CHtml::link(gT('Advanced Search'), '#', array('class' => 'search-button')); ?>
 <div class="search-form" style="display:none">
 <?php $this->renderPartial('_search', array(
     'model' => $model,

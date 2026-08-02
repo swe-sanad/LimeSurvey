@@ -449,7 +449,7 @@ class SurveysGroupsController extends SurveyCommonAction
     {
         $model = SurveysGroups::model()->findByPk($id);
         if ($model === null) {
-            throw new CHttpException(404, 'The requested page does not exist.');
+            throw new CHttpException(404, gT('The requested page does not exist.'));
         }
         if (!$model->hasPermission(SurveysGroups::getMinimalPermissionRead())) {
             throw new CHttpException(403, gT("You do not have permission to access this page."));

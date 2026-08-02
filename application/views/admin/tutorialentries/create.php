@@ -3,16 +3,16 @@
 /* @var $model TutorialEntry */
 
 $this->breadcrumbs = array(
-    'Tutorial Entries' => array('index'),
-    'Create',
+    gT('Tutorial Entries') => array('index'),
+    gT('Create'),
 );
 
 $this->menu = array(
-    array('label' => 'List TutorialEntry', 'url' => array('index')),
-    array('label' => 'Manage TutorialEntry', 'url' => array('admin')),
+    array('label' => gT('List TutorialEntry'), 'url' => array('index')),
+    array('label' => gT('Manage TutorialEntry'), 'url' => array('admin')),
 );
 ?>
 
-<h1>Create TutorialEntry</h1>
+<h1><?php echo gT('Create TutorialEntry'); ?></h1>
 
 <?php $this->renderPartial('_form', array('model' => $model)); ?>
