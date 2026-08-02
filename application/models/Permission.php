@@ -642,6 +642,56 @@ class Permission extends LSActiveRecord
         return $this->hasPermission(0, 'global', $sPermission, $sCRUD, $iUserID);
     }
 
+    /**
+     * Returns the global permissions (name => crud booleans) the CURRENT user is allowed to grant
+     * to another user or role. No admin may grant more permissions than they themselves own, and
+     * the 'superadmin' permission may only be granted by someone holding 'superadmin'/'create'.
+     *
+     * Shared by UserManagementController and UserRoleController so the privilege-escalation guard
+     * can never diverge between the "assign permission to user" and "assign permission to role" paths.
+     *
+     * @return array
+     */
+    public static function getGrantableGlobalPermissions(): array
+    {
+        $aCruds = array('create', 'read', 'update', 'delete', 'import', 'export');
+        $aGlobalPermissions = self::model()->getGlobalBasePermissions();
+        $aAllowedPermissions = array_map(
+            function ($aGlobalPermission) use ($aCruds) {
+                $aPermission = array();
+                foreach ($aCruds as $sCrud) {
+                    $aPermission[$sCrud] = $aGlobalPermission[$sCrud];
+                }
+                return $aPermission;
+            },
+            $aGlobalPermissions
+        );
+        // superadmin permission always need create
+        if (!self::model()->hasGlobalPermission('superadmin', 'create')) {
+            unset($aAllowedPermissions['superadmin']);
+        }
+        if (!self::model()->hasGlobalPermission('superadmin', 'read')) {
+            // if not superadmin filter the available permissions as no admin may give more permissions than he owns
+            $aFilteredPermissions = array();
+            foreach ($aAllowedPermissions as $sPermissionName => $aPermission) {
+                foreach ($aCruds as $sCrud) {
+                    if ($aPermission[$sCrud] && !self::model()->hasGlobalPermission($sPermissionName, $sCrud)) {
+                        $aPermission[$sCrud] = false;
+                    }
+                }
+                // Only keep a row for that permission if there is at least one permission he may give to other users
+                if (
+                    $aPermission['create'] || $aPermission['read'] || $aPermission['update']
+                    || $aPermission['delete'] || $aPermission['import'] || $aPermission['export']
+                ) {
+                    $aFilteredPermissions[$sPermissionName] = $aPermission;
+                }
+            }
+            $aAllowedPermissions = $aFilteredPermissions;
+        }
+        return $aAllowedPermissions;
+    }
+
     public function getButtons(): string
     {
         $setPermissionsUrl = App()->getController()->createUrl(

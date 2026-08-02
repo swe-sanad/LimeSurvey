@@ -1572,7 +1572,7 @@ class UserManagementController extends LSBaseController
         $model = User::model()->findByPk($id);
 
         if ($model === null) {
-            throw new CHttpException(404, 'The requested page does not exist.');
+            throw new CHttpException(404, gT('The requested page does not exist.'));
         }
 
         return $model;
@@ -1820,45 +1820,8 @@ class UserManagementController extends LSBaseController
          * Get current user permission to update only this permission
          * NEVER delete existing Permission !
          */
-        $aGlobalPermissions = Permission::model()->getGlobalBasePermissions();
-        /* Get only permission part */
-        $aAllowedPermissions = array_map(
-            function ($aGlobalPermission) {
-                return array(
-                    'create' => $aGlobalPermission['create'],
-                    'read' => $aGlobalPermission['read'],
-                    'update' => $aGlobalPermission['update'],
-                    'delete' => $aGlobalPermission['delete'],
-                    'import' => $aGlobalPermission['import'],
-                    'export' => $aGlobalPermission['export'],
-                );
-            },
-            $aGlobalPermissions
-        );
-        // superadmin permission always need create
-        if (!Permission::model()->hasGlobalPermission('superadmin', 'create')) {
-            unset($aAllowedPermissions['superadmin']);
-        }
-        $aCruds = array('create', 'read', 'update', 'delete', 'import', 'export');
-        if (!Permission::model()->hasGlobalPermission('superadmin', 'read')) {
-            // if not superadmin filter the available permissions as no admin may give more permissions than he owns
-            $aFilteredPermissions = array();
-            foreach ($aAllowedPermissions as $PermissionName => $aPermission) {
-                foreach ($aPermission as $sPermissionKey => &$sPermissionValue) {
-                    if (in_array($sPermissionKey, $aCruds) && !Permission::model()->hasGlobalPermission($PermissionName, $sPermissionKey)) {
-                        $sPermissionValue = false;
-                    }
-                }
-                // Only show a row for that permission if there is at least one permission he may give to other users
-                if (
-                    $aPermission['create'] || $aPermission['read'] || $aPermission['update']
-                    || $aPermission['delete'] || $aPermission['import'] || $aPermission['export']
-                ) {
-                    $aFilteredPermissions[$PermissionName] = $aPermission;
-                }
-            }
-            $aAllowedPermissions = $aFilteredPermissions;
-        }
+        // No admin may grant more permissions than they themselves own (shared with UserRoleController)
+        $aAllowedPermissions = Permission::getGrantableGlobalPermissions();
         $results = [];
         //Apply the permission array
         foreach ($aAllowedPermissions as $permissionKey => $aAllowedPermission) {
