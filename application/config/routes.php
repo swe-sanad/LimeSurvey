@@ -24,6 +24,13 @@ $route['<_sid:\d+>/tk-<_token:\w+>/*'] = "survey/index/sid/<_sid>/token/<_token>
 $route['<_sid:\d+>/*'] = "survey/index/sid/<_sid>";
 $route['<sid:\d+>'] = array('survey/index', 'matchValue' => true);
 
+// Self-service org signup (Phase 1 multi-tenancy, Workflow A)
+$route['signup'] = 'signup/index';
+
+// Marketing landing page replaces the public survey list at site root
+// (Phase 1 multi-tenancy, Workflow A stage 3).
+$route[''] = 'landing/index';
+
 //Admin Routes
 $route['admin/index'] = "admin"; // this can not be changed to "dashboard/view" as long as the AdminController exists, will break "path" urlFormat
 $route['admin/<action:\w+>/sa/<sa:\w+>/*'] = 'admin/<action>/sa/<sa>';
