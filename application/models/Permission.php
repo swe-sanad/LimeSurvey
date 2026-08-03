@@ -762,7 +762,43 @@ class Permission extends LSActiveRecord
             self::$aCachedSurveyPermissions[$iSurveyID][$sPermission][$iUserID] = [];
         }
         $oSurvey = Survey::Model()->findByPk($iSurveyID);
+        // Multi-tenancy chokepoint (docs/multitenancy/PLAN.md Phase 0, task 0.6): a pre-filter
+        // that can only REMOVE access, never grant it, so it cannot weaken the checks below.
+        if ($oSurvey && !$this->isOrgAllowedForSurvey($oSurvey, $sCRUD, $iUserID)) {
+            return self::$aCachedSurveyPermissions[$iSurveyID][$sPermission][$sCRUD][$iUserID] = false;
+        }
         return self::$aCachedSurveyPermissions[$iSurveyID][$sPermission][$sCRUD][$iUserID] = ($oSurvey ? $oSurvey->hasPermission($sPermission, $sCRUD, $iUserID) : false);
+    }
+
+    /**
+     * Multi-tenancy org gate for hasSurveyPermission(): true unless the survey belongs to
+     * another org and the caller is neither the platform super-admin nor an auditor with a
+     * read/export grant into that org.
+     *
+     * @param Survey $oSurvey
+     * @param string $sCRUD
+     * @param integer|null $iUserID
+     * @return bool
+     */
+    private function isOrgAllowedForSurvey($oSurvey, $sCRUD, $iUserID)
+    {
+        $ownerOrgId = $oSurvey->owner_org_id;
+        if (empty($ownerOrgId)) {
+            // Legacy/global survey not (yet) assigned to an org: no org restriction to enforce.
+            return true;
+        }
+        $iUserID = $this->getUserId($iUserID);
+        if ($this->hasGlobalPermission('superadmin', 'read', $iUserID)) {
+            return true;
+        }
+        $curOrg = TenantContext::currentOrgId();
+        if ($curOrg !== null && (int) $ownerOrgId === $curOrg) {
+            return true;
+        }
+        if (in_array($sCRUD, array('read', 'export')) && OrgAuditorGrant::hasGrant($iUserID, $ownerOrgId)) {
+            return true;
+        }
+        return false;
     }
 
     /**
