@@ -79,12 +79,17 @@ class OrgSignupTest extends TestBaseClass
 
     public function testDuplicateEmailIsRejected()
     {
-        $first = (new OrgSignup())->register($this->validInput('dupe'));
+        // validInput() mints a fresh unique email on every call, so the duplicate
+        // must come from reusing ONE input — calling validInput('dupe') twice would
+        // produce two different emails and both would (correctly) succeed.
+        $input = $this->validInput('dupe');
+
+        $first = (new OrgSignup())->register($input);
         $this->assertTrue($first['success'], print_r($first['errors'] ?? [], true));
         $this->createdUserIds[] = $first['user']->uid;
         $this->createdOrgIds[] = $first['user']->owner_org_id;
 
-        $second = (new OrgSignup())->register($this->validInput('dupe'));
+        $second = (new OrgSignup())->register($input);
         $this->assertFalse($second['success']);
         $this->assertArrayHasKey('email', $second['errors']);
     }
