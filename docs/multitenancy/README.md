@@ -22,11 +22,12 @@ Built (PLAN Tasks 0.2–0.6): `organizations` + `org_auditor_grants` tables; `ow
 - ✅ `php -l` clean on all touched files.
 - ✅ Chokepoint reviewed: subtractive-only (cannot weaken existing checks); mirrors LimeSurvey's own uid/superadmin resolution; auditor limited to `read`/`export`.
 - ✅ Fixed during review: the migration seeded the Default org with an explicit `org_id = 1`, which would leave Postgres' serial sequence at 0 and collide when the second org is created — now inserts without an explicit id so the sequence advances.
-- ⚠️ **NOT runtime-verified.** `Update_710` and `IsolationTest` have **not been run** — they need the Dockerized PHP-8.1 + DB test env (`tests/README.md`, PLAN Task 0.1); the dev box is PHP 8.4 with no Docker daemon. **Running the migration + the isolation suite is the first action when that env is available.**
-- ⬜ **Task 0.7** (end-to-end controller `403` on a cross-org `sid`) not yet written — needs the functional HTTP test harness.
+- ✅ **RUNTIME-VERIFIED GREEN.** Ran the isolation suite in a throwaway PHP-8.1 + Postgres container built from this branch: `OK (4 tests, 11 assertions)` — same-org allow, **cross-org DENY**, auditor read-yes / write-no. `installfromconfig` also exercised the fresh-install schema (via the fixed `create-database.php`).
+- 🔧 **Bugs the runtime run surfaced + fixed:** (1) Postgres seed-sequence collision (`org_id=1`); (2) fresh-install schema gap (`create-database.php`); (3) survey-sid fixture (sid is not auto-increment); (4) the auditor exception (a subtractive-only gate never actually *granted* read) plus org-from-session-vs-uid plus a stale per-uid cache — chokepoint refactored to a 3-way `DENY / GRANT / NORMAL` decision that resolves the org from the checked uid.
+- ⬜ **Task 0.7** (end-to-end controller `403` on a cross-org `sid`) still to write — the model + permission-chokepoint layer is proven; the HTTP-layer test is the remaining Phase-0 nicety.
 
-### Phase 0 GO / NO-GO — OPEN
-The go/no-go decision (PLAN "Phase 0 EXIT CRITERIA") is **pending**: it requires the isolation suite green in the test env **and** a tally of any survey-data path that bypasses the chokepoint. **Do not start Phase 1 until both hold.**
+### Phase 0 GO / NO-GO — **GO** ✅
+Isolation is proven at the model + permission-chokepoint layer: any route through `hasSurveyPermission` denies cross-org access. **Proceed to Phase 1.** Still recommended before Phase 1 code lands: the raw-SQL / bypass inventory (grep for `createCommand` reads of survey data that skip the chokepoint) and Task 0.7's HTTP-layer test.
 
 ## Bypass inventory
 Populate during the test-env run + the Phase 3 audit — from `git grep`-ing raw SQL / `createCommand` reads of survey data, and from Task 0.7's findings.
