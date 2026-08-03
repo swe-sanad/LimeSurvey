@@ -29,7 +29,20 @@ Built (PLAN Tasks 0.2–0.6): `organizations` + `org_auditor_grants` tables; `ow
 ### Phase 0 GO / NO-GO — **GO** ✅
 Isolation is proven at the model + permission-chokepoint layer: any route through `hasSurveyPermission` denies cross-org access. **Proceed to Phase 1.** Still recommended before Phase 1 code lands: the raw-SQL / bypass inventory (grep for `createCommand` reads of survey data that skip the chokepoint) and Task 0.7's HTTP-layer test.
 
+### Phase 1 — Workflow A (front door) — built, review-clean, runtime pending
+Delivered (branch `feat/phase1-tenancy`): org-scoped survey + user lists (org clause in `Survey::getPermissionCriteria()` and `User::search()`, superadmin-bypassed via the null-org path); `owner_org_id` auto-stamp in `Survey`/`User` `beforeSave`; public self-signup (`SignupController` + `OrgSignup` service, instant activation + math CAPTCHA, transactional org+user+grant with rollback); a neutral-"Surveys" marketing landing page at `/` (`LandingController`, installer-pattern) that also disables the public survey list at root.
+
+- ✅ QA gate: **APPROVED** — isolation traced through the real code paths (cross-org read denied; superadmin bypass is a clause-omission, never a leaky `= NULL`); no BLOCKERs. All touched PHP `php -l` clean.
+- ✅ Org-admin grant routed through `Permission::setPermissions(..., $bBypassCheck=true)`, which structurally strips `superadmin` — an org-admin can never receive it.
+- 🔧 Review fold-ins applied: auto-login now checks `authenticate()`'s result (an IP-lockout no longer dead-ends on the dashboard); signup layout carries `dir` for RTL; `OrgSignup::validate()` enforces org/full-name max lengths; signup `aria-describedby` emitted only when the error div exists; landing test asserts the real signup URL. The "duplicate-email race" is a non-issue: `users_name` has a UNIQUE DB index (`idx1_users`), same-email signups derive the same username, so the second insert fails closed and rolls back.
+- ⬜ Runtime: the extended isolation + signup suites run next in the VPS PHP-8.1 container (local PHP is 8.4). Deploy to `surveys.swe.com.ly` follows a green run.
+
+### Deferred hardening (tracked, not blocking Workflow A)
+- **TenantContext fail-open (Phase-0 latent):** `currentOrgId()` returns null (= unrestricted) for a *logged-in non-superadmin whose `owner_org_id` is null*. Not reachable through Phase-1 flows — signup and org-admin user-create both stamp an org, and `Update_710` backfilled every existing user to org 1 — but a superadmin manually creating an org-less user would produce a cross-org-visible account. Fix: fail closed (scope-to-nothing) for a logged-in non-superadmin with no org, or enforce a non-null `owner_org_id` for all non-superadmins. Deferred because it touches the runtime-proven Phase-0 predicate and needs its own test cycle.
+- **Per-record user IDOR:** only the user *list* is org-scoped (`User::search`); the user edit/view-by-uid actions in `UserManagementController` are not yet org-checked, so a direct id could load another org's user record. Surveys are already covered (the `hasSurveyPermission` chokepoint gates per-record). Close in Workflow C (team management) with a per-record org check on the user actions.
+
 ## Bypass inventory
 Populate during the test-env run + the Phase 3 audit — from `git grep`-ing raw SQL / `createCommand` reads of survey data, and from Task 0.7's findings.
 
-_(none catalogued yet)_
+- `UserManagementController` per-record user reads (edit/view by uid) — not org-scoped yet (see Deferred hardening); close in Workflow C.
+- (survey raw-SQL / `createCommand` audit still pending — Phase 3.)
