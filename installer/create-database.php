@@ -680,6 +680,7 @@ function populateDatabase($oDB)
             'googleanalyticsapikey' => "string(25) NULL",
             'tokenencryptionoptions' => "text NULL",
             'access_mode' => "string(1) DEFAULT 'O'",
+            'owner_org_id' => "integer NULL",
             'lastmodified' => 'datetime NOT NULL',
         ), $options);
 
@@ -687,6 +688,29 @@ function populateDatabase($oDB)
 
         $oDB->createCommand()->createIndex('{{idx1_surveys}}', '{{surveys}}', 'owner_id', false);
         $oDB->createCommand()->createIndex('{{idx2_surveys}}', '{{surveys}}', 'gsid', false);
+        $oDB->createCommand()->createIndex('{{idx1_surveys_owner_org_id}}', '{{surveys}}', 'owner_org_id', false);
+
+        // Multi-tenancy: organizations (tenant entity) + auditor cross-org grants.
+        // MUST match application/helpers/update/updates/Update_710.php so fresh installs
+        // and upgraded installs converge on the same schema. See docs/multitenancy/.
+        $oDB->createCommand()->createTable('{{organizations}}', array(
+            'org_id' => 'pk',
+            'name' => "string(200) NOT NULL",
+            'slug' => "string(200) NOT NULL",
+            'status' => "string(20) NOT NULL DEFAULT 'active'",
+            'created_by' => "integer NULL",
+            'created' => "datetime NULL",
+        ), $options);
+        $oDB->createCommand()->createIndex('{{idx1_organizations_slug}}', '{{organizations}}', 'slug', true);
+
+        $oDB->createCommand()->createTable('{{org_auditor_grants}}', array(
+            'id' => 'pk',
+            'uid' => "integer NOT NULL",
+            'org_id' => "integer NOT NULL",
+            'granted_by' => "integer NOT NULL",
+            'scope' => "string(20) NOT NULL DEFAULT 'read'",
+        ), $options);
+        $oDB->createCommand()->createIndex('{{idx1_org_auditor_grants_uid_org}}', '{{org_auditor_grants}}', array('uid', 'org_id'), false);
 
 
         // surveys_groups
@@ -1104,11 +1128,13 @@ function populateDatabase($oDB)
             'validation_key_expiration' => 'datetime',
             'last_forgot_email_password' => 'datetime',
             'expires' => 'datetime',
-            'user_status' => 'integer NOT NULL DEFAULT 1'
+            'user_status' => 'integer NOT NULL DEFAULT 1',
+            'owner_org_id' => "integer NULL"
         ), $options);
 
         $oDB->createCommand()->createIndex('{{idx1_users}}', '{{users}}', 'users_name', true);
         $oDB->createCommand()->createIndex('{{idx2_users}}', '{{users}}', 'email', false);
+        $oDB->createCommand()->createIndex('{{idx1_users_owner_org_id}}', '{{users}}', 'owner_org_id', false);
 
 
         //user_groups
