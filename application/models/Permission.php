@@ -762,43 +762,67 @@ class Permission extends LSActiveRecord
             self::$aCachedSurveyPermissions[$iSurveyID][$sPermission][$iUserID] = [];
         }
         $oSurvey = Survey::Model()->findByPk($iSurveyID);
-        // Multi-tenancy chokepoint (docs/multitenancy/PLAN.md Phase 0, task 0.6): a pre-filter
-        // that can only REMOVE access, never grant it, so it cannot weaken the checks below.
-        if ($oSurvey && !$this->isOrgAllowedForSurvey($oSurvey, $sCRUD, $iUserID)) {
-            return self::$aCachedSurveyPermissions[$iSurveyID][$sPermission][$sCRUD][$iUserID] = false;
+        // Multi-tenancy chokepoint (docs/multitenancy/PLAN.md Phase 0, task 0.6).
+        if ($oSurvey) {
+            $orgDecision = $this->orgAccessDecision($oSurvey, $sCRUD, $iUserID);
+            if ($orgDecision === self::ORG_DENY) {
+                // Cross-org (non-auditor): deny outright, before the normal checks.
+                return self::$aCachedSurveyPermissions[$iSurveyID][$sPermission][$sCRUD][$iUserID] = false;
+            }
+            if ($orgDecision === self::ORG_GRANT) {
+                // Auditor read/export into a granted org: grant, bypassing the per-survey
+                // check (an auditor holds no per-survey permission of their own).
+                return self::$aCachedSurveyPermissions[$iSurveyID][$sPermission][$sCRUD][$iUserID] = true;
+            }
+            // ORG_NORMAL: same org / super-admin / legacy survey -> fall through to the
+            // ordinary per-survey permission check (org membership alone is not access).
         }
         return self::$aCachedSurveyPermissions[$iSurveyID][$sPermission][$sCRUD][$iUserID] = ($oSurvey ? $oSurvey->hasPermission($sPermission, $sCRUD, $iUserID) : false);
     }
 
+    /** Org-gate decisions returned by orgAccessDecision() for hasSurveyPermission(). */
+    const ORG_DENY = 'deny';
+    const ORG_GRANT = 'grant';
+    const ORG_NORMAL = 'normal';
+
     /**
-     * Multi-tenancy org gate for hasSurveyPermission(): true unless the survey belongs to
-     * another org and the caller is neither the platform super-admin nor an auditor with a
-     * read/export grant into that org.
+     * Multi-tenancy org gate for hasSurveyPermission(). Returns one of:
+     *  - ORG_DENY   : the survey belongs to another org and the caller is neither the platform
+     *                 super-admin nor an auditor with a read/export grant -> deny outright.
+     *  - ORG_GRANT  : an auditor with a read/export grant into the survey's org -> grant
+     *                 read/export (they hold no per-survey permission, so the normal check
+     *                 below would otherwise wrongly deny them).
+     *  - ORG_NORMAL : same org, platform super-admin, or a legacy/un-orged survey -> defer to
+     *                 the ordinary per-survey permission check (org membership alone is not access).
      *
      * @param Survey $oSurvey
      * @param string $sCRUD
      * @param integer|null $iUserID
-     * @return bool
+     * @return string one of self::ORG_*
      */
-    private function isOrgAllowedForSurvey($oSurvey, $sCRUD, $iUserID)
+    private function orgAccessDecision($oSurvey, $sCRUD, $iUserID)
     {
         $ownerOrgId = $oSurvey->owner_org_id;
         if (empty($ownerOrgId)) {
             // Legacy/global survey not (yet) assigned to an org: no org restriction to enforce.
-            return true;
+            return self::ORG_NORMAL;
         }
         $iUserID = $this->getUserId($iUserID);
         if ($this->hasGlobalPermission('superadmin', 'read', $iUserID)) {
-            return true;
+            return self::ORG_NORMAL;
         }
-        $curOrg = TenantContext::currentOrgId();
-        if ($curOrg !== null && (int) $ownerOrgId === $curOrg) {
-            return true;
+        // The org of the user BEING CHECKED (resolved from $iUserID, not the session:
+        // hasSurveyPermission may be called with an explicit uid that differs from the
+        // current request's user, and results are cached per that uid).
+        $oUser = User::model()->findByPk($iUserID);
+        $userOrgId = ($oUser !== null && !empty($oUser->owner_org_id)) ? (int) $oUser->owner_org_id : null;
+        if ($userOrgId !== null && (int) $ownerOrgId === $userOrgId) {
+            return self::ORG_NORMAL;
         }
-        if (in_array($sCRUD, array('read', 'export')) && OrgAuditorGrant::hasGrant($iUserID, $ownerOrgId)) {
-            return true;
+        if (in_array($sCRUD, array('read', 'export'), true) && OrgAuditorGrant::hasGrant($iUserID, $ownerOrgId)) {
+            return self::ORG_GRANT;
         }
-        return false;
+        return self::ORG_DENY;
     }
 
     /**

@@ -143,13 +143,16 @@ class IsolationTest extends TestBaseClass
     public function testSurveyPermissionIsOrgScoped()
     {
         $this->loginAsFixtureUserInOrg(1);
-        $this->assertTrue(\Permission::model()->hasSurveyPermission($this->surveyA, 'survey', 'read'));
-        $this->assertFalse(\Permission::model()->hasSurveyPermission($this->surveyB, 'survey', 'read'));
+        // Pass explicit uids: hasSurveyPermission caches per passed uid, and the org gate
+        // resolves each user's org from that uid, so isolation is asserted per user.
+        $uidA = (int) $this->userA->uid;
+        $this->assertTrue(\Permission::model()->hasSurveyPermission($this->surveyA, 'survey', 'read', $uidA));
+        $this->assertFalse(\Permission::model()->hasSurveyPermission($this->surveyB, 'survey', 'read', $uidA));
 
         // Auditor of org B (read grant): read yes, update no.
         $this->loginAsAuditorWithGrant($this->auditorUid, 2);
-        $this->assertTrue(\Permission::model()->hasSurveyPermission($this->surveyB, 'survey', 'read'));
-        $this->assertFalse(\Permission::model()->hasSurveyPermission($this->surveyB, 'survey', 'update'));
+        $this->assertTrue(\Permission::model()->hasSurveyPermission($this->surveyB, 'survey', 'read', $this->auditorUid));
+        $this->assertFalse(\Permission::model()->hasSurveyPermission($this->surveyB, 'survey', 'update', $this->auditorUid));
     }
 
     /**
@@ -185,6 +188,13 @@ class IsolationTest extends TestBaseClass
     {
         $survey = new \Survey();
         $survey->setScenario('insert');
+        // LimeSurvey survey sids are NOT auto-increment (the column is a plain integer PK),
+        // so a survey must be created with an explicit, unused sid.
+        $sid = 100000 + \mt_rand(0, 899999);
+        while (\Survey::model()->findByPk($sid) !== null) {
+            $sid = 100000 + \mt_rand(0, 899999);
+        }
+        $survey->sid = $sid;
         $survey->admin = 'Isolation Test Admin';
         $survey->language = 'en';
         $survey->format = 'G';
