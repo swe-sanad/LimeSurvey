@@ -97,7 +97,8 @@ class User extends LSActiveRecord
             'parentUser' => array(self::HAS_ONE, 'User', array('uid' => 'parent_id')),
             'settings' => array(self::HAS_MANY, 'SettingsUser', 'uid'),
             'groups' => array(self::MANY_MANY, 'UserGroup', '{{user_in_groups}}(uid,ugid)'),
-            'roles' => array(self::MANY_MANY, 'Permissiontemplates', '{{user_in_permissionrole}}(uid,ptid)')
+            'roles' => array(self::MANY_MANY, 'Permissiontemplates', '{{user_in_permissionrole}}(uid,ptid)'),
+            'organization' => array(self::BELONGS_TO, 'Organization', 'owner_org_id'),
         );
     }
 
@@ -142,6 +143,12 @@ class User extends LSActiveRecord
         // allows multiple users without an email address.
         if ($this->email === '') {
             $this->email = null;
+        }
+        if (empty($this->owner_org_id)) {
+            $currentOrgId = TenantContext::currentOrgId();
+            if ($currentOrgId !== null) {
+                $this->owner_org_id = $currentOrgId;
+            }
         }
         return parent::beforeSave();
     }
@@ -1076,6 +1083,12 @@ class User extends LSActiveRecord
             $criteria->compare('u.users_name', $getParentName, true);
         }
 
+        /* Multi-tenancy: restrict to the caller's org, unless the caller is a guest
+         * or the platform super-admin (TenantContext returns null for both). */
+        $currentOrgId = TenantContext::currentOrgId();
+        if ($currentOrgId !== null) {
+            $criteria->compare('t.owner_org_id', $currentOrgId, false);
+        }
 
         return new CActiveDataProvider($this, array(
             'criteria' => $criteria,

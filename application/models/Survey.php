@@ -1953,6 +1953,17 @@ class Survey extends LSActiveRecord implements PermissionInterface
                 $criteriaPerm->compare("surveysgroupsowner{$userid}.owner_id", $userid, false, 'OR');
             }
         }
+        /* Multi-tenancy: additionally restrict to the caller's org, unless the caller
+         * is a guest or the platform super-admin (TenantContext returns null for both). */
+        $currentOrgId = TenantContext::currentOrgId();
+        if ($currentOrgId !== null) {
+            $criteriaPerm->mergeWith(
+                array(
+                    'condition' => 't.owner_org_id = :currentOrgId',
+                    'params' => array(':currentOrgId' => $currentOrgId),
+                )
+            );
+        }
         /* Place for a new event */
         return $criteriaPerm;
     }
@@ -2644,6 +2655,12 @@ class Survey extends LSActiveRecord implements PermissionInterface
     protected function beforeSave()
     {
         $this->lastmodified = gmdate('Y-m-d H:i:s');
+        if (empty($this->owner_org_id)) {
+            $currentOrgId = TenantContext::currentOrgId();
+            if ($currentOrgId !== null) {
+                $this->owner_org_id = $currentOrgId;
+            }
+        }
         return parent::beforeSave();
     }
 }
