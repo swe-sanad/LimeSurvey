@@ -410,7 +410,7 @@ class UserManagementController extends LSBaseController
             // Only transfer to a user the caller may act on (same org, or superadmin). A tampered
             // transfer_surveys_to targeting another org is rejected before any ownership change.
             try {
-                $this->getUserOr403((int) $transferTo);
+                $oTransferTarget = $this->getUserOr403((int) $transferTo);
             } catch (CHttpException $e) {
                 return App()->getController()->renderPartial('/admin/super/_renderJson', [
                     'data' => [
@@ -421,7 +421,7 @@ class UserManagementController extends LSBaseController
             }
             $iSurveysTransferred = Survey::model()->updateAll(array('owner_id' => (int) $transferTo), 'owner_id=' . (int) $userId);
             if ($iSurveysTransferred) {
-                $sTransferredTo = User::model()->findByPk($transferTo)->users_name;
+                $sTransferredTo = $oTransferTarget->users_name;
                 $messages[] = sprintf(gT("All of the user's surveys were transferred to %s."), $sTransferredTo);
             }
         }
