@@ -21,6 +21,9 @@ class SignupController extends CController
     public function init()
     {
         parent::init();
+        // Defines getLanguageRTL(), used by the signup layout's <html dir> — same
+        // helper LandingController loads; without it the layout fatals at render.
+        App()->loadHelper('surveytranslator');
         App()->getClientScript()->registerPackage('bootstrap');
     }
 
