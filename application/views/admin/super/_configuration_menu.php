@@ -207,6 +207,14 @@
                                 </a>
                             </li>
                         <?php endif; ?>
+                        <!-- Team -->
+                        <?php if (Permission::model()->hasGlobalPermission('users', 'read')) : ?>
+                            <li class="dropdown-item">
+                                <a href="<?php echo $this->createUrl("team/index"); ?>">
+                                    <?php eT("Team"); ?>
+                                </a>
+                            </li>
+                        <?php endif; ?>
                         <?php if (Permission::model()->hasGlobalPermission('usergroups', 'read')) : ?>
                             <!-- User groups -->
                             <li class="dropdown-item">

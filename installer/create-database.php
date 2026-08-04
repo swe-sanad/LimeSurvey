@@ -714,6 +714,23 @@ function populateDatabase($oDB)
         ), $options);
         $oDB->createCommand()->createIndex('{{idx1_org_auditor_grants_uid_org}}', '{{org_auditor_grants}}', array('uid', 'org_id'), false);
 
+        // Organization team invites (Workflow C). MUST match
+        // application/helpers/update/updates/Update_712.php so fresh installs and
+        // upgraded installs converge on the same schema. See docs/multitenancy/.
+        $oDB->createCommand()->createTable('{{org_invites}}', array(
+            'id' => 'pk',
+            'org_id' => "integer NOT NULL",
+            'email' => "string(254) NOT NULL",
+            'token' => "string(64) NOT NULL",
+            'invited_by' => "integer NULL",
+            'status' => "string(20) NOT NULL DEFAULT 'pending'",
+            'created' => "datetime NULL",
+            'expires' => "datetime NULL",
+            'accepted_at' => "datetime NULL",
+        ), $options);
+        $oDB->createCommand()->createIndex('{{idx1_org_invites_token}}', '{{org_invites}}', 'token', true);
+        $oDB->createCommand()->createIndex('{{idx2_org_invites_org}}', '{{org_invites}}', 'org_id', false);
+
 
         // surveys_groups
         $oDB->createCommand()->createTable('{{surveys_groups}}', array(

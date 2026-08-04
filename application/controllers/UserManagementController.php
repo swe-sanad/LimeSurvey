@@ -11,6 +11,38 @@ class UserManagementController extends LSBaseController
     use RenderErrorsTrait;
 
     /**
+     * Single chokepoint for resolving a user id from the request: an org-admin holds
+     * the 'users' permission and can reach every action below directly, but User::search()
+     * only org-scopes the LIST — every per-record action loaded its target via a bare
+     * findByPk() with no org check, a cross-org IDOR. Every action that resolves a uid
+     * from the request MUST route through this method (or loadModel(), which delegates
+     * to it) instead of calling User::model()->findByPk() directly.
+     *
+     * @param int $uid
+     * @return User
+     * @throws CHttpException 404 if no such user, 403 if the user belongs to another org
+     */
+    private function getUserOr403(int $uid): User
+    {
+        $oUser = User::model()->findByPk($uid);
+        if ($oUser === null) {
+            throw new CHttpException(404);
+        }
+        // Resolve the acting org ONCE and reject a null org explicitly: without this, two
+        // "orgless" (owner_org_id = NULL) non-superadmin accounts would both int-cast to 0 and
+        // pass the compare, re-opening the very cross-org hole this chokepoint closes. Mirrors
+        // TeamController::actionDeactivate's null-check.
+        $orgId = TenantContext::currentOrgId();
+        if (
+            !Permission::model()->hasGlobalPermission('superadmin', 'read')
+            && ($orgId === null || (int) $oUser->owner_org_id !== (int) $orgId)
+        ) {
+            throw new CHttpException(403, gT('You do not have permission to access this user.'));
+        }
+        return $oUser;
+    }
+
+    /**
      * @return array
      **/
     public function accessRules()
@@ -119,10 +151,12 @@ class UserManagementController extends LSBaseController
         if ($userid === null) {
             $oUser = new User();
         } else {
-            $oUser = User::model()->findByPk((int)$userid);
-            if ($oUser === null) {
-                App()->user->setFlash('error', gT("User does not exist"));
+            try {
+                $oUser = $this->getUserOr403((int) $userid);
+            } catch (CHttpException $e) {
+                App()->user->setFlash('error', $e->statusCode === 404 ? gT("User does not exist") : $e->getMessage());
                 $this->redirect(App()->request->urlReferrer);
+                return;
             }
         }
 
@@ -264,16 +298,17 @@ class UserManagementController extends LSBaseController
             ]);
         }
         $userId = (int) App()->request->getPost('userid');
-        $oUser = User::model()->findByPk($userId);
-        $currentUser = (int) App()->user->getId();
-        if (!$oUser) {
+        try {
+            $oUser = $this->getUserOr403($userId);
+        } catch (CHttpException $e) {
             return App()->getController()->renderPartial('/admin/super/_renderJson', [
                 'data' => [
                     'success' => false,
-                    'errors' => gT("User does not exist")
+                    'errors' => $e->statusCode === 404 ? gT("User does not exist") : $e->getMessage()
                 ]
             ]);
         }
+        $currentUser = (int) App()->user->getId();
         if ($permission_superadmin_read) {
             // Can't delete forced superadmins
             if (Permission::isForcedSuperAdmin($userId)) {
@@ -342,7 +377,16 @@ class UserManagementController extends LSBaseController
             $aOwnedSurveys = Survey::model()->findAllByAttributes(array('owner_id' => $userId));
             if (count($aOwnedSurveys)) {
                 $postuser = flattenText(Yii::app()->request->getPost("user"));
-                $aUsers = User::model()->findAll();
+                // Scope the transfer-target choices to the caller's own org (superadmin sees all)
+                // so the dropdown can't enumerate every tenant's users.
+                if (Permission::model()->hasGlobalPermission('superadmin', 'read')) {
+                    $aUsers = User::model()->findAll();
+                } else {
+                    $orgId = TenantContext::currentOrgId();
+                    $aUsers = $orgId === null
+                        ? array()
+                        : User::model()->findAllByAttributes(array('owner_org_id' => $orgId));
+                }
                 return Yii::app()->getController()->renderPartial(
                     '/admin/super/_renderJson',
                     [
@@ -363,8 +407,19 @@ class UserManagementController extends LSBaseController
                 );
             }
         } else {
-            // If $transferTo is not null, transfer the surveys
-            $iSurveysTransferred = Survey::model()->updateAll(array('owner_id' => $transferTo), 'owner_id=' . $userId);
+            // Only transfer to a user the caller may act on (same org, or superadmin). A tampered
+            // transfer_surveys_to targeting another org is rejected before any ownership change.
+            try {
+                $this->getUserOr403((int) $transferTo);
+            } catch (CHttpException $e) {
+                return App()->getController()->renderPartial('/admin/super/_renderJson', [
+                    'data' => [
+                        'success' => false,
+                        'errors' => gT('You do not have permission to transfer surveys to that user.'),
+                    ]
+                ]);
+            }
+            $iSurveysTransferred = Survey::model()->updateAll(array('owner_id' => (int) $transferTo), 'owner_id=' . (int) $userId);
             if ($iSurveysTransferred) {
                 $sTransferredTo = User::model()->findByPk($transferTo)->users_name;
                 $messages[] = sprintf(gT("All of the user's surveys were transferred to %s."), $sTransferredTo);
@@ -425,11 +480,8 @@ class UserManagementController extends LSBaseController
         if (!in_array($action, ['activate', 'deactivate'], true)) {
             throw new CHttpException(400, gT("Invalid action"));
         }
-        $oUser = User::model()->findByPk($userId);
+        $oUser = $this->getUserOr403($userId);
 
-        if ($oUser == null) {
-            throw new CHttpException(404, gT("Invalid user ID"));
-        }
         if (Permission::model()->getUserId() == $userId) { // canEdit allow user to update himself
             throw new CHttpException(403, gT("You can not update this user."));
         }
@@ -505,20 +557,16 @@ class UserManagementController extends LSBaseController
         }
         $results = [];
         foreach ($userIds as $iUserId) {
-            $oUser = User::model()->findByPk($iUserId);
-            if ($oUser == null) {
-                throw new CHttpException(404, gT("Invalid user ID"));
-            } else {
-                $results[$iUserId]['title'] = $oUser->users_name;
-                if (!$this->isAllowedToEdit($oUser)) {
-                    $results[$iUserId]['error'] = gT('Unauthorized');
-                    $results[$iUserId]['result'] = false;
-                    continue;
-                }
-                $results[$iUserId]['result'] = $oUser->setActivationStatus($operation);
-                if (!$results[$iUserId]['result']) {
-                    $results[$iUserId]['error'] = gT('Error');
-                }
+            $oUser = $this->loadModel((int) $iUserId);
+            $results[$iUserId]['title'] = $oUser->users_name;
+            if (!$this->isAllowedToEdit($oUser)) {
+                $results[$iUserId]['error'] = gT('Unauthorized');
+                $results[$iUserId]['result'] = false;
+                continue;
+            }
+            $results[$iUserId]['result'] = $oUser->setActivationStatus($operation);
+            if (!$results[$iUserId]['result']) {
+                $results[$iUserId]['error'] = gT('Error');
             }
         }
         return $results;
@@ -578,7 +626,7 @@ class UserManagementController extends LSBaseController
                 ['errors' => [gT("You do not have permission to access this page.")], 'noButton' => true]
             );
         }
-        $oUser = User::model()->findByPk($userid);
+        $oUser = $this->getUserOr403($userid);
 
         $userGroups = array_map(function ($oUGMap) {
             return $oUGMap->group->name;
@@ -608,7 +656,14 @@ class UserManagementController extends LSBaseController
     {
         $userId = Yii::app()->request->getParam('userid');
         $userId = sanitize_int($userId);
-        $oUser = User::model()->findByPk($userId);
+        try {
+            $oUser = $this->getUserOr403($userId);
+        } catch (CHttpException $e) {
+            return $this->renderPartial(
+                'partial/error',
+                ['errors' => [$e->getMessage() ?: gT("User does not exist")], 'noButton' => true]
+            );
+        }
 
         $userManager = new UserManager(Yii::app()->user, $oUser);
         if (!$userManager->canAssignPermissions()) {
@@ -666,7 +721,16 @@ class UserManagementController extends LSBaseController
     public function actionSaveUserPermissions(): string
     {
         $userId = Yii::app()->request->getPost('userid');
-        $oUser = User::model()->findByPk($userId);
+        try {
+            $oUser = $this->getUserOr403($userId);
+        } catch (CHttpException $e) {
+            return Yii::app()->getController()->renderPartial('/admin/super/_renderJson', [
+                "data" => [
+                    'success' => false,
+                    'errors' => [$e->getMessage() ?: gT("User does not exist")],
+                ]
+            ]);
+        }
 
         $userManager = new UserManager(Yii::app()->user, $oUser);
         if (!$userManager->canAssignPermissions()) {
@@ -711,7 +775,14 @@ class UserManagementController extends LSBaseController
         }
         $aTemplateModels = Template::model()->findAll();
         $userId = Yii::app()->request->getParam('userid');
-        $oUser = User::model()->findByPk((int)$userId);
+        try {
+            $oUser = $this->getUserOr403((int) $userId);
+        } catch (CHttpException $e) {
+            return $this->renderPartial(
+                'partial/error',
+                ['errors' => [$e->getMessage() ?: gT("User does not exist")], 'noButton' => true]
+            );
+        }
 
         $aTemplates = array_map(function ($oTemplate) use ($userId) {
             $oPermission = Permission::model()->findByAttributes(array('permission' => $oTemplate->folder, 'uid' => $userId, 'entity' => 'template'));
@@ -769,7 +840,14 @@ class UserManagementController extends LSBaseController
     public function actionAddRole(): ?string
     {
         $userId = Yii::app()->request->getParam('userid');
-        $oUser = User::model()->findByPk($userId);
+        try {
+            $oUser = $this->getUserOr403($userId);
+        } catch (CHttpException $e) {
+            return $this->renderPartial(
+                'partial/error',
+                ['errors' => [$e->getMessage() ?: gT("User does not exist")], 'noButton' => true]
+            );
+        }
 
         $userManager = new UserManager(Yii::app()->user, $oUser);
         if (!$userManager->canAssignRole() || $oUser->uid == App()->user->getId()) {
@@ -810,7 +888,16 @@ class UserManagementController extends LSBaseController
     public function actionSaveRole(): ?string
     {
         $iUserId = Yii::app()->request->getPost('userid');
-        $oUser = User::model()->findByPk($iUserId);
+        try {
+            $oUser = $this->getUserOr403($iUserId);
+        } catch (CHttpException $e) {
+            return Yii::app()->getController()->renderPartial('/admin/super/_renderJson', [
+                "data" => [
+                    'success' => false,
+                    'errors' => $e->getMessage() ?: gT("User does not exist"),
+                ]
+            ]);
+        }
 
         $userManager = new UserManager(Yii::app()->user, $oUser);
         if (!$userManager->canAssignRole() || $oUser->uid == App()->user->getId()) {
@@ -1028,9 +1115,23 @@ class UserManagementController extends LSBaseController
         }
 
         if ($uid > 0) {
-            $oUsers = User::model()->findByPk($uid);
-        } else {
+            try {
+                $oUsers = $this->getUserOr403($uid);
+            } catch (CHttpException $e) {
+                return $this->renderPartial(
+                    'partial/error',
+                    ['errors' => [$e->getMessage() ?: gT("User does not exist")], 'noButton' => true]
+                );
+            }
+        } elseif (Permission::model()->hasGlobalPermission('superadmin', 'read')) {
             $oUsers = User::model()->findAll();
+        } else {
+            // Bulk export (uid<=0) must not leak other orgs' members: an org-admin holds
+            // users.export, so scope the set to the caller's own org (empty if they have none).
+            $orgId = TenantContext::currentOrgId();
+            $oUsers = $orgId === null
+                ? array()
+                : User::model()->findAllByAttributes(array('owner_org_id' => $orgId));
         }
 
         //test GET PARAM $ouputFormat
@@ -1258,7 +1359,16 @@ class UserManagementController extends LSBaseController
         $aPermissions = Yii::app()->request->getPost('Permission', []);
         $results = [];
         foreach ($userIds as $iUserId) {
-            $oUser = User::model()->findByPk($iUserId);
+            try {
+                $oUser = $this->loadModel((int) $iUserId);
+            } catch (CHttpException $e) {
+                $results[$iUserId] = [
+                    'title' => '',
+                    'result' => false,
+                    'error' => $e->getMessage() ?: gT("User does not exist"),
+                ];
+                continue;
+            }
             $results[$iUserId] = [
                 'title' => $oUser->users_name
             ];
@@ -1467,10 +1577,12 @@ class UserManagementController extends LSBaseController
     public function actionTakeOwnership()
     {
         $userId = App()->request->getPost('userid');
-        $oUser = User::model()->findByPk($userId);
-        if (!$oUser) {
-            App()->user->setFlash('error', gT("User does not exist"));
+        try {
+            $oUser = $this->getUserOr403($userId);
+        } catch (CHttpException $e) {
+            App()->user->setFlash('error', $e->statusCode === 404 ? gT("User does not exist") : $e->getMessage());
             $this->redirect(App()->request->urlReferrer);
+            return;
         }
         $permission_superadmin = Permission::model()->hasGlobalPermission('superadmin', 'read');
         if (
@@ -1513,11 +1625,12 @@ class UserManagementController extends LSBaseController
             return false;
         }
         $userId = $uid;
-        $oUser = User::model()->findByPk($userId);
-        $currentUser = (int)App()->user->getId();
-        if (!$oUser) {
+        try {
+            $oUser = $this->loadModel($userId);
+        } catch (CHttpException $e) {
             return false;
         }
+        $currentUser = (int)App()->user->getId();
         if ($permission_superadmin_read) {
             // Can't delete forced superadmins
             if (Permission::isForcedSuperAdmin($userId)) {
@@ -1571,13 +1684,7 @@ class UserManagementController extends LSBaseController
      */
     public function loadModel(int $id): User
     {
-        $model = User::model()->findByPk($id);
-
-        if ($model === null) {
-            throw new CHttpException(404, gT('The requested page does not exist.'));
-        }
-
-        return $model;
+        return $this->getUserOr403($id);
     }
 
     /**

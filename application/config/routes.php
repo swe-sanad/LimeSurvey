@@ -27,6 +27,10 @@ $route['<sid:\d+>'] = array('survey/index', 'matchValue' => true);
 // Self-service org signup (Phase 1 multi-tenancy, Workflow A)
 $route['signup'] = 'signup/index';
 
+// Organization team invites (Phase 1 multi-tenancy, Workflow C)
+$route['invite/accept'] = 'acceptInvite/index';
+$route['team'] = 'team/index';
+
 // Marketing landing page replaces the public survey list at site root
 // (Phase 1 multi-tenancy, Workflow A stage 3).
 $route[''] = 'landing/index';
