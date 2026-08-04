@@ -64,13 +64,19 @@
 
                 <div class="mb-3">
                     <label for="loadsecurity" class="form-label"><?php eT('Security check'); ?></label>
-                    <?php echo $this->widget('LSCaptcha', [
+                    <?php
+                    // LSCaptcha::renderImage() RETURNS the <img> (it does not echo like the parent
+                    // CCaptcha), so run() alone only emits the refresh JS. Render the widget (to
+                    // register that JS) then echo renderOut() to actually output the image.
+                    $captcha = $this->widget('LSCaptcha', [
                         'captchaAction' => 'captcha',
                         'buttonType' => 'button',
                         'buttonOptions' => ['class' => 'btn btn-sm btn-outline-secondary'],
                         'buttonLabel' => gT('Reload image', 'unescaped'),
                         'imageOptions' => ['alt' => gT('Security question image'), 'class' => 'img-fluid mb-2 d-block'],
-                    ], true); ?>
+                    ]);
+                    echo $captcha->renderOut();
+                    ?>
                     <input
                         type="text"
                         class="form-control<?php echo !empty($errors['captcha']) ? ' is-invalid' : ''; ?>"
