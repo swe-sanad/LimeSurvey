@@ -1,0 +1,43 @@
+<?php if (!defined('BASEPATH')) {
+    exit('No direct script access allowed');
+}
+/*
+ | LimeSurvey config template for surveys.swe.com.ly on the SWE-Pioneers VPS.
+ |
+ | Copy to /opt/apps/limesurvey/app/config.php on the box and fill the CHANGE_ME
+ | values. NEVER commit the real file — it holds secrets and is git-ignored.
+ |
+ | DB = shared platform-postgres (create it first with
+ |   sudo bash /opt/platform/scripts/provision-platform-app.sh limesurvey
+ | which provisions the DB/role and writes the credentials).
+ | Behind Traefik (TLS terminated at the edge) -> hostInfo forces https URLs.
+ */
+return array(
+    'components' => array(
+        'db' => array(
+            'connectionString' => 'pgsql:host=platform-postgres;port=5432;dbname=limesurvey_db;',
+            'username'         => 'limesurvey',
+            'password'         => 'CHANGE_ME_DB_PASSWORD',
+            'charset'          => 'utf8',
+            'tablePrefix'      => 'lime_',
+        ),
+        // Pretty URLs (/signup, /admin, ...) + index.php in the path.
+        'urlManager' => array(
+            'urlFormat'      => 'path',
+            'showScriptName' => true,
+        ),
+        // TLS terminates at Traefik; force https absolute URLs.
+        'request' => array(
+            'hostInfo' => 'https://surveys.swe.com.ly',
+            'baseUrl'  => '',
+        ),
+    ),
+    'config' => array(
+        'debug'          => 0,
+        'debugsql'       => 0,
+        'defaultuser'    => 'admin',
+        'defaultpass'    => 'CHANGE_ME_ADMIN_PASSWORD',
+        'siteadminemail' => 'admin@example.com',
+        'siteadminname'  => 'Administrator',
+    ),
+);
