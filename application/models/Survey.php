@@ -49,6 +49,7 @@ use LimeSurvey\PluginManager\PluginEvent;
  * @property string $publicstatistics Public statistics: (Y/N)
  * @property string $publicgraphs Show graphs in public statistics: (Y/N)
  * @property string $listpublic List survey publicly: (Y/N)
+ * @property string $visibility Per-survey visibility gate: draft/public/invite/private (default public)
  * @property string $htmlemail Use HTML format for token emails: (Y/N)
  * @property string $sendconfirmation Send confirmation emails:(Y/N)
  * @property string $tokenanswerspersistence Enable token-based response persistence: (Y/N)
@@ -539,6 +540,8 @@ class Survey extends LSActiveRecord implements PermissionInterface
             array('publicstatistics', 'in', 'range' => array('Y', 'N', 'I'), 'allowEmpty' => true),
             array('publicgraphs', 'in', 'range' => array('Y', 'N', 'I'), 'allowEmpty' => true),
             array('listpublic', 'in', 'range' => array('Y', 'N', 'I'), 'allowEmpty' => true),
+            array('visibility', 'default', 'value' => 'public'),
+            array('visibility', 'in', 'range' => array('draft', 'public', 'invite', 'private'), 'allowEmpty' => true),
             array('htmlemail', 'in', 'range' => array('Y', 'N', 'I'), 'allowEmpty' => true),
             array('sendconfirmation', 'in', 'range' => array('Y', 'N', 'I'), 'allowEmpty' => true),
             array('tokenanswerspersistence', 'in', 'range' => array('Y', 'N', 'I'), 'allowEmpty' => true),
@@ -1250,6 +1253,59 @@ class Survey extends LSActiveRecord implements PermissionInterface
     {
         return ($this->active === 'Y');
     }
+
+    /** Visibility gate is open; existing active/expires/token/access_mode checks still apply. */
+    const VISIBILITY_OPEN = 'OPEN';
+    /** Visibility gate denies taking the survey: it is a draft. */
+    const VISIBILITY_DENY_DRAFT = 'DENY_DRAFT';
+    /** Visibility gate requires a valid token regardless of access_mode. */
+    const VISIBILITY_REQUIRE_TOKEN = 'REQUIRE_TOKEN';
+    /** Visibility gate denies taking the survey: it is org-private and the caller is not allowed. */
+    const VISIBILITY_DENY_PRIVATE = 'DENY_PRIVATE';
+
+    /**
+     * Single source of truth for the `visibility` additive gate, shared by
+     * SurveyIndex (taking gate), SurveyRuntimeHelper (token requirement),
+     * and this class's own findAllPublic() semantics.
+     *
+     * - public (default/empty) -> OPEN: no new restriction, existing checks apply.
+     * - draft -> DENY_DRAFT: never takeable.
+     * - invite -> REQUIRE_TOKEN: a valid token is required regardless of access_mode.
+     * - private -> OPEN for a platform superadmin or a logged-in same-org user,
+     *   DENY_PRIVATE otherwise (including any guest).
+     *
+     * @param int|null $userId Falls back to the current logged-in user (App()->getCurrentUserId()).
+     * @return string One of the VISIBILITY_* constants above.
+     */
+    public function getVisibilityAccessDecision($userId = null)
+    {
+        switch ($this->visibility) {
+            case 'draft':
+                return self::VISIBILITY_DENY_DRAFT;
+            case 'invite':
+                return self::VISIBILITY_REQUIRE_TOKEN;
+            case 'private':
+                if ($userId === null) {
+                    $userId = App()->getCurrentUserId();
+                }
+                if (!empty($userId) && Permission::model()->hasGlobalPermission('superadmin', 'read', $userId)) {
+                    return self::VISIBILITY_OPEN;
+                }
+                if (
+                    !empty($userId)
+                    && $this->owner_org_id !== null
+                    && ($oUser = User::model()->active()->notexpired()->findByPk($userId)) !== null
+                    && (int) $oUser->owner_org_id === (int) $this->owner_org_id
+                ) {
+                    return self::VISIBILITY_OPEN;
+                }
+                return self::VISIBILITY_DENY_PRIVATE;
+            case 'public':
+            default:
+                return self::VISIBILITY_OPEN;
+        }
+    }
+
     /**
      * @return bool
      */
@@ -2535,7 +2591,7 @@ class Survey extends LSActiveRecord implements PermissionInterface
     public function findAllPublic()
     {
         $oCriteria = new CDbCriteria();
-        $oCriteria->condition = "listpublic = 'Y' or listpublic = 'I'";
+        $oCriteria->condition = "(listpublic = 'Y' or listpublic = 'I') AND visibility = 'public'";
         $aSurveys = $this->findAll($oCriteria);
         $aSurveys = array_filter(
             $aSurveys,

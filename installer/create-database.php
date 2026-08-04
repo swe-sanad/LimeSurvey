@@ -681,6 +681,7 @@ function populateDatabase($oDB)
             'tokenencryptionoptions' => "text NULL",
             'access_mode' => "string(1) DEFAULT 'O'",
             'owner_org_id' => "integer NULL",
+            'visibility' => "string(10) NOT NULL DEFAULT 'public'",
             'lastmodified' => 'datetime NOT NULL',
         ), $options);
 
@@ -689,6 +690,7 @@ function populateDatabase($oDB)
         $oDB->createCommand()->createIndex('{{idx1_surveys}}', '{{surveys}}', 'owner_id', false);
         $oDB->createCommand()->createIndex('{{idx2_surveys}}', '{{surveys}}', 'gsid', false);
         $oDB->createCommand()->createIndex('{{idx1_surveys_owner_org_id}}', '{{surveys}}', 'owner_org_id', false);
+        $oDB->createCommand()->createIndex('{{idx1_surveys_visibility}}', '{{surveys}}', 'visibility', false);
 
         // Multi-tenancy: organizations (tenant entity) + auditor cross-org grants.
         // MUST match application/helpers/update/updates/Update_710.php so fresh installs
