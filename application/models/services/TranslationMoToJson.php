@@ -68,6 +68,18 @@ class TranslationMoToJson
             ];
         }
 
+        // Merge fork-maintained editor-string overrides for this language: strings the React editor
+        // renders from raw theme config.xml titles/categories that are missing from the .mo (see
+        // application/config/editorTranslationOverrides.php). Only adds keys the .mo lacks.
+        $overrideFile = $pathApplication . DIRECTORY_SEPARATOR . 'application'
+            . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'editorTranslationOverrides.php';
+        if (file_exists($overrideFile)) {
+            $overrides = include $overrideFile;
+            if (is_array($overrides) && isset($overrides[$this->language]) && is_array($overrides[$this->language])) {
+                $messagesGettext = array_merge($messagesGettext, $overrides[$this->language]);
+            }
+        }
+
         if ($translateToJson) {
             return json_encode($messagesGettext);
         }
