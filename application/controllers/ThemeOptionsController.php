@@ -373,9 +373,7 @@ class ThemeOptionsController extends LSBaseController
      */
     public function actionSetAdminTheme(string $sAdminThemeName)
     {
-        if (!Permission::model()->hasGlobalPermission('settings', 'update')) {
-            throw new CHttpException(403, gT("You do not have permission to access this page."));
-        }
+        $this->requireGlobalPermission('settings', 'update');
 
         $sAdmintheme = sanitize_paranoid_string($sAdminThemeName);
         SettingGlobal::setSetting('admintheme', $sAdmintheme);
@@ -515,7 +513,7 @@ class ThemeOptionsController extends LSBaseController
             $model = TemplateConfiguration::model()->findByPk($id);
         }
         if ($model === null) {
-            throw new CHttpException(404, 'The requested page does not exist.');
+            throw new CHttpException(404, gT('The requested page does not exist.'));
         }
 
         return $model;
@@ -536,7 +534,7 @@ class ThemeOptionsController extends LSBaseController
             if ($theme === 'questiontheme') {
                 $templateFolder = App()->request->getPost('templatefolder');
                 if (strpos($templateFolder, "..") !== false) {
-                    throw new CHttpException(eT("Unsafe path"));
+                    throw new CHttpException(400, gT("Unsafe path"));
                 }
                 //$themeType is being sanitized inside getAbsolutePathForType
                 $themeType = App()->request->getPost('theme_type');

@@ -45,7 +45,7 @@ class OptinController extends LSYii_Controller
 
         $survey = Survey::model()->findByPk($surveyId);
         if (empty($survey) || !$survey->hasTokensTable) {
-            throw new CHttpException(404, "This survey does not seem to exist. It may have been deleted or the link you were given is outdated or incorrect.");
+            throw new CHttpException(404, gT("This survey does not seem to exist. It may have been deleted or the link you were given is outdated or incorrect."));
         }
 
         //Check that there is a SID
@@ -97,7 +97,7 @@ class OptinController extends LSYii_Controller
 
         $survey = Survey::model()->findByPk($surveyId);
         if (empty($survey) || !$survey->hasTokensTable) {
-            throw new CHttpException(404, "This survey does not seem to exist. It may have been deleted or the link you were given is outdated or incorrect.");
+            throw new CHttpException(404, gT("This survey does not seem to exist. It may have been deleted or the link you were given is outdated or incorrect."));
         }
 
         //Check that there is a SID
@@ -168,7 +168,7 @@ class OptinController extends LSYii_Controller
 
         $survey = Survey::model()->findByPk($surveyId);
         if (empty($survey) || !$survey->hasTokensTable) {
-            throw new CHttpException(404, "This survey does not seem to exist. It may have been deleted or the link you were given is outdated or incorrect.");
+            throw new CHttpException(404, gT("This survey does not seem to exist. It may have been deleted or the link you were given is outdated or incorrect."));
         }
 
         //Check that there is a SID

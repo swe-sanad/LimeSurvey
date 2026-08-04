@@ -28,7 +28,7 @@ class EditorLinkController extends LSYii_Controller
     public function run($action)
     {
         if (App()->user->isGuest) {
-            throw new CHttpException(403, 'Access denied');
+            throw new CHttpException(403, gT('Access denied'));
         }
 
         $this->setAuthenticationInitCookie();

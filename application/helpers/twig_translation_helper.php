@@ -26,6 +26,9 @@ function dummy_twig_translation_helper()
     return;
 
     gT("Your survey responses have not been recorded. This survey is not yet active."); // From themes/survey/vanilla/views/subviews/content/submit_preview.twig:23 (2020/11/16)
+    gT("Skip to main content"); // From themes/survey/vanilla/views/layout_global.twig
+    gT("Survey navigation"); // From themes/survey/vanilla/views/subviews/header/nav_bar.twig
+    gT("Survey progress"); // From themes/survey/vanilla/views/subviews/header/progress_bar.twig
     gT("Search (3 characters minimum)"); // From application/views/survey/questions/answer/shortfreetext/location_mapservice/item_100.twig:29 (2021/02/19)
     gT("Restrict search to map extent"); // From application/views/survey/questions/answer/shortfreetext/location_mapservice/item_100.twig:40 (2021/02/19)
     gT("Latitude:"); // From application/views/survey/questions/answer/shortfreetext/location_mapservice/item_100.twig:66 (2021/02/19)

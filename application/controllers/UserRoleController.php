@@ -2,6 +2,8 @@
 
 class UserRoleController extends LSBaseController
 {
+    use RenderErrorsTrait;
+
     /**
      * Run filters
      *
@@ -498,25 +500,6 @@ class UserRoleController extends LSBaseController
     }
 
     /**
-     * Returns HTML fragment of errors
-     *
-     * @param array $errors
-     *
-     * @return string $errorDiv
-     */
-    private function renderErrors(array $errors): string
-    {
-        $errorDiv = '<ul class="list-unstyled">';
-        foreach ($errors as $key => $error) {
-            foreach ($error as $errormessages) {
-                $errorDiv .= '<li>' . print_r($errormessages, true) . '</li>';
-            }
-        }
-        $errorDiv .= '</ul>';
-        return $errorDiv;
-    }
-
-    /**
      * Adds permission to a role
      * Needs an array in the form of [PERMISSIONID][PERMISSION]
      *
@@ -530,10 +513,18 @@ class UserRoleController extends LSBaseController
         $oCriteria->compare('entity_id', $iRoleId);
         $oCriteria->compare('entity', 'role');
         //Kill all Permissions of that role.
-        $aPermissionsCurrently = Permission::model()->deleteAll($oCriteria);
+        Permission::model()->deleteAll($oCriteria);
+
+        // No admin may grant a role more permissions than they themselves own (shared with UserManagementController)
+        $aAllowedPermissions = Permission::getGrantableGlobalPermissions();
+
         $results = [];
         //Apply the permission array
         foreach ($aPermissionArray as $sPermissionKey => $aPermissionSettings) {
+            if (!isset($aAllowedPermissions[$sPermissionKey])) {
+                // Current user does not own this permission at all: skip granting it to the role.
+                continue;
+            }
             $oPermission = new Permission();
             $oPermission->entity = 'role';
             $oPermission->entity_id = $iRoleId;
@@ -541,6 +532,10 @@ class UserRoleController extends LSBaseController
             $oPermission->permission = $sPermissionKey;
 
             foreach ($aPermissionSettings as $sSettingKey => $sSettingValue) {
+                if (empty($aAllowedPermissions[$sPermissionKey][$sSettingKey])) {
+                    // Current user does not own this CRUD action on this permission: never grant it.
+                    continue;
+                }
                 $oPermissionDBSettingKey = $sSettingKey . '_p';
                 $oPermission->$oPermissionDBSettingKey = $sSettingValue == 'on' ? 1 : 0;
             }

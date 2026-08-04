@@ -104,6 +104,7 @@
             $this->widget('ext.admin.grid.CLSGridView', [ //done
                 'dataProvider' => $questionModel->search(),
                 'id' => 'question-grid',
+                'htmlOptions' => ['class' => 'table-responsive grid-view-ls'],
                 'caption'      => gT("Questions"),
                 'emptyText' => gT('No questions found.'),
                 'massiveActionTemplate' => $massiveAction,

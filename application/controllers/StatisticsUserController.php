@@ -79,13 +79,13 @@ class StatisticsUserController extends SurveyController
         }
         if (!$iSurveyID) {
             //This next line ensures that the $iSurveyID value is never anything but a number.
-            throw new CHttpException(404, 'You have to provide a valid survey ID.');
+            throw new CHttpException(404, gT('You have to provide a valid survey ID.'));
         }
 
 
         $actresult = Survey::model()->findAll('sid = :sid AND active = :active', array(':sid' => $iSurveyID, ':active' => 'Y')); //Checked
         if (count($actresult) == 0) {
-            throw new CHttpException(404, 'You have to provide a valid survey ID.');
+            throw new CHttpException(404, gT('You have to provide a valid survey ID.'));
         } else {
             $surveyinfo = getSurveyInfo($iSurveyID);
             // let's get the survey title for display
@@ -93,7 +93,7 @@ class StatisticsUserController extends SurveyController
             // let's get css from individual template.css - so define path
             $thisSurveyCssPath = getTemplateURL($surveyinfo["template"]);
             if ($surveyinfo['publicstatistics'] != 'Y') {
-                throw new CHttpException(404, 'The public statistics for this survey are deactivated.');
+                throw new CHttpException(404, gT('The public statistics for this survey are deactivated.'));
             }
 
             //check if graphs should be shown for this survey

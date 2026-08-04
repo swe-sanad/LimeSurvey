@@ -43,6 +43,7 @@
         'maxlength' : (maxlength ? maxlength : null),
         'data-number' : 1,
         'data-integer' : integeronly,
+        'aria-required' : ((mandatory is defined and mandatory == 'Y') ? 'true' : null),
         'aria-labelledby' : "ls-question-text-"~basename
     }))
     }}

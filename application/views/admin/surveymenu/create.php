@@ -3,16 +3,16 @@
 /* @var $model Surveymenu */
 
 $this->breadcrumbs = array(
-    'Surveymenus' => array('index'),
-    'Create',
+    gT('Surveymenus') => array('index'),
+    gT('Create'),
 );
 
 $this->menu = array(
-    array('label' => 'List Surveymenu', 'url' => array('index')),
-    array('label' => 'Manage Surveymenu', 'url' => array('admin')),
+    array('label' => gT('List Surveymenu'), 'url' => array('index')),
+    array('label' => gT('Manage Surveymenu'), 'url' => array('admin')),
 );
 ?>
 
-<h1>Create Surveymenu</h1>
+<h1><?php echo gT('Create Surveymenu'); ?></h1>
 
 <?php $this->renderPartial('_form', array('model' => $model)); ?>

@@ -281,6 +281,23 @@ class LS_Twig_Extension extends AbstractExtension
     }
 
     /**
+     * Host-less base path of the LimeSurvey installation root (the directory containing
+     * index.php), eg "" at the domain root or "/subdir" in a subdirectory, without a
+     * trailing slash. Used to build install-relative URLs (eg PWA manifest/service worker)
+     * from twig without hardcoding "/".
+     *
+     * Uses getBaseUrl(FALSE) deliberately: getBaseUrl(true) prepends the host derived from the
+     * Host request header, which - reflected into the inline service-worker registration script
+     * while Twig autoescape is off - is a Host-header XSS sink. Keep this host-less, and
+     * json_encode() it at the JS call site.
+     * @return string
+     */
+    public static function baseUrl()
+    {
+        return Yii::app()->getBaseUrl(false);
+    }
+
+    /**
      * @param string $sRessource
      */
     public static function assetPublish($sRessource)

@@ -78,6 +78,7 @@ class RenderLongFreeText extends QuestionBaseRenderer
             'inputsize'              => $inputsize,
             'maxlength'              => $maxlength,
             'placeholder'            => $placeholder,
+            'mandatory'              => $this->oQuestion->mandatory,
         ), true);
 
         if (!empty($this->getQuestionAttribute('time_limit'))) {

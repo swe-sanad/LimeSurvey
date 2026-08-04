@@ -758,9 +758,9 @@ class ResponsesController extends LSBaseController
                 $sFileRealName = $sDir . $aFile['filename'];
                 $sRealUserPath = get_absolute_path($sFileRealName);
                 if ($sRealUserPath === false) {
-                    throw new CHttpException(404, "File not found.");
+                    throw new CHttpException(404, gT("File not found."));
                 } elseif (strpos((string) $sRealUserPath, $sDir) !== 0) {
-                    throw new CHttpException(403, "File cannot be accessed.");
+                    throw new CHttpException(403, gT("File cannot be accessed."));
                 } else {
                     $mimeType = CFileHelper::getMimeType($sFileRealName, null, false);
                     if (is_null($mimeType)) {

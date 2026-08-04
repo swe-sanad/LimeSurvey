@@ -260,7 +260,8 @@ class RenderListDropdown extends QuestionBaseRenderer
             'dropdownSize'           => $this->getDropdownSize(),
             'checkconditionFunction' => $this->checkconditionFunction,
             'value'                  => $this->mSessionValue,
-            'coreClass'              => $this->sCoreClass
+            'coreClass'              => $this->sCoreClass,
+            'mandatory'              => $this->oQuestion->mandatory,
             ), true);
 
         $inputnames[] = $this->sSGQA;

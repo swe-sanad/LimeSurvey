@@ -1,0 +1,191 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Lint guard: translation parity between .twig files and the string-extraction bot.
+ *
+ * The external string-extraction bot scans PHP gT()/eT()/ngT() calls to build
+ * locale/_template/limesurvey.pot, but it does NOT scan .twig files. Twig-only
+ * translatable strings are manually mirrored into
+ * application/helpers/twig_translation_helper.php so the bot picks them up.
+ * That manual mirror is fragile: a new twig string silently misses translation
+ * if a dev forgets to add it. This script makes the gap loud instead of silent.
+ *
+ * A gT()/eT()/ngT() string-literal call in a .twig file is "covered" when the
+ * exact string is either:
+ *   - present as a msgid in locale/_template/limesurvey.pot, or
+ *   - present as a gT/eT/ngT literal in application/helpers/twig_translation_helper.php
+ *
+ * Exit 0 = every twig gT/eT/ngT literal is covered.
+ * Exit 1 = at least one uncovered literal was found (printed as file:line: "string").
+ *
+ * Known limitations (pragmatic, not fixed here):
+ *  - .pot msgid parsing handles single-line "msgid "..."" and the common
+ *    multi-line/continued form (msgid "" followed by quoted continuation
+ *    lines), concatenating the decoded parts. It does not evaluate
+ *    msgid_plural, and unusual formatting (e.g. a continuation line that
+ *    itself isn't a plain quoted string) is not reconstructed.
+ *  - Only a literal (single- or double-quoted) first argument is checked.
+ *    gT($var), gT("a" . $b), sprintf-wrapped calls, etc. are skipped because
+ *    the value can't be resolved statically - this matches what the
+ *    extraction bot itself can (and can't) see.
+ */
+
+$root = dirname(__DIR__, 2);
+$potFile = $root . '/locale/_template/limesurvey.pot';
+$helperFile = $root . '/application/helpers/twig_translation_helper.php';
+$scanDirs = ['application', 'themes'];
+$excludedDirNames = ['node_modules', 'vendor', 'tmp'];
+
+/**
+ * Decode a gettext/PHP-style double-quoted-ish literal body (already stripped
+ * of its surrounding quotes) into its runtime string value.
+ */
+function decodeLiteral(string $body): string
+{
+    return stripcslashes($body);
+}
+
+/**
+ * Extract gT/eT/ngT(...) calls whose first argument is a string literal.
+ * Returns a list of ['text' => string, 'offset' => int].
+ */
+function extractLiteralCalls(string $content): array
+{
+    $pattern = '/\b(?:gT|eT|ngT)\s*\(\s*(?:\'((?:[^\'\\\\]|\\\\.)*)\'|"((?:[^"\\\\]|\\\\.)*)")/s';
+    preg_match_all($pattern, $content, $matches, PREG_OFFSET_CAPTURE);
+
+    $calls = [];
+    foreach ($matches[0] as $i => $fullMatch) {
+        $offset = $fullMatch[1];
+        $raw = $matches[1][$i][1] !== -1 ? $matches[1][$i][0] : $matches[2][$i][0];
+        $calls[] = [
+            'text' => decodeLiteral($raw),
+            'offset' => $offset,
+        ];
+    }
+    return $calls;
+}
+
+/**
+ * Load every msgid from the .pot file into a set (string => true).
+ */
+function loadPotMsgids(string $potFile): array
+{
+    $msgids = [];
+    $lines = file($potFile, FILE_IGNORE_NEW_LINES);
+    if ($lines === false) {
+        fwrite(STDERR, "Could not read .pot file: $potFile\n");
+        exit(1);
+    }
+
+    $count = count($lines);
+    for ($i = 0; $i < $count; $i++) {
+        $line = $lines[$i];
+        if (!preg_match('/^msgid\s+"(.*)"$/', $line, $m)) {
+            continue;
+        }
+
+        $parts = [$m[1]];
+        // Multi-line form: `msgid ""` followed by quoted continuation lines.
+        if ($m[1] === '') {
+            $j = $i + 1;
+            while ($j < $count && preg_match('/^"(.*)"$/', $lines[$j], $cm)) {
+                $parts[] = $cm[1];
+                $j++;
+            }
+            $i = $j - 1;
+        }
+
+        $msgid = decodeLiteral(implode('', $parts));
+        if ($msgid !== '') {
+            $msgids[$msgid] = true;
+        }
+    }
+    return $msgids;
+}
+
+/**
+ * Recursively find files with the given extension under $dir, skipping any
+ * path component named in $excludedDirNames.
+ */
+function findFiles(string $dir, string $extension, array $excludedDirNames): array
+{
+    $found = [];
+    if (!is_dir($dir)) {
+        return $found;
+    }
+
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveCallbackFilterIterator(
+            new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
+            function (SplFileInfo $file) use ($excludedDirNames) {
+                if ($file->isDir() && in_array($file->getFilename(), $excludedDirNames, true)) {
+                    return false;
+                }
+                return true;
+            }
+        )
+    );
+
+    foreach ($iterator as $file) {
+        /** @var SplFileInfo $file */
+        if ($file->isFile() && strtolower($file->getExtension()) === $extension) {
+            $found[] = $file->getPathname();
+        }
+    }
+    return $found;
+}
+
+// --- build the coverage set ---------------------------------------------
+
+$covered = loadPotMsgids($potFile);
+
+$helperContent = file_get_contents($helperFile);
+if ($helperContent === false) {
+    fwrite(STDERR, "Could not read helper file: $helperFile\n");
+    exit(1);
+}
+foreach (extractLiteralCalls($helperContent) as $call) {
+    $covered[$call['text']] = true;
+}
+
+// --- scan .twig files -----------------------------------------------------
+
+$errors = [];
+foreach ($scanDirs as $dir) {
+    $twigFiles = findFiles($root . '/' . $dir, 'twig', $excludedDirNames);
+    foreach ($twigFiles as $twigFile) {
+        $content = file_get_contents($twigFile);
+        if ($content === false) {
+            continue;
+        }
+
+        $relative = str_replace('\\', '/', substr($twigFile, strlen($root) + 1));
+
+        foreach (extractLiteralCalls($content) as $call) {
+            if (isset($covered[$call['text']])) {
+                continue;
+            }
+            $line = substr_count($content, "\n", 0, $call['offset']) + 1;
+            $errors[] = sprintf('%s:%d: "%s"', $relative, $line, $call['text']);
+        }
+    }
+}
+
+if (!empty($errors)) {
+    fwrite(STDERR, "Uncovered gT/eT/ngT string literal(s) found in .twig files:\n");
+    foreach ($errors as $error) {
+        fwrite(STDERR, "  $error\n");
+    }
+    fwrite(STDERR, sprintf(
+        "\n%d uncovered string(s). Add them as gT(\"...\"); // From <path> lines\n" .
+        "in %s\n",
+        count($errors),
+        str_replace('\\', '/', substr($helperFile, strlen($root) + 1))
+    ));
+    exit(1);
+}
+
+echo "OK: all twig gT/eT/ngT string literals are covered.\n";
+exit(0);

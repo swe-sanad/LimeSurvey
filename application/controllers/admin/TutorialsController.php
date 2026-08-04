@@ -195,7 +195,7 @@ class TutorialsController extends SurveyCommonAction
     {
         $model = Tutorial::model()->findByPk($id);
         if ($model === null) {
-            throw new CHttpException(404, 'The requested page does not exist.');
+            throw new CHttpException(404, gT('The requested page does not exist.'));
         }
         return $model;
     }

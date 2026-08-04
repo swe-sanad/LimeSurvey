@@ -330,13 +330,6 @@ function sanitize_userfullname($string)
     return $string;
 }
 
-function sanitize_labelname($string)
-{
-    $labelname_length = 100;
-    $string = mb_substr((string) $string, 0, $labelname_length);
-    return $string;
-}
-
 // make float float!
 function sanitize_float($float, $min = '', $max = '')
 {
@@ -384,87 +377,6 @@ function sanitize($input, $flags, $min = '', $max = '')
     return $input;
 }
 
-function check_paranoid_string($input, $min = '', $max = '')
-{
-    if ($input != sanitize_paranoid_string($input, $min, $max)) {
-        return false;
-    }
-    return true;
-}
-
-function check_int($input, $min = '', $max = '')
-{
-    if ($input != sanitize_int($input, $min, $max)) {
-        return false;
-    }
-    return true;
-}
-
-function check_float($input, $min = '', $max = '')
-{
-    if ($input != sanitize_float($input, $min, $max)) {
-        return false;
-    }
-    return true;
-}
-
-function check_html_string($input, $min = '', $max = '')
-{
-    if ($input != sanitize_html_string($input)) {
-            return false;
-    }
-    return true;
-}
-
-
-function check_system_string($input, $min = '', $max = '')
-{
-    if ($input != sanitize_system_string($input, $min, $max)) {
-            return false;
-    }
-    return true;
-}
-
-// glue together all the other functions
-/**
- * @param $input
- * @param $flags
- * @param string $min
- * @param string $max
- * @return bool
- * @throws Exception
- */
-function check($input, $flags, $min = '', $max = '')
-{
-    $oldput = $input;
-    if ($flags & UTF8) {
-        // This case used before function my_utf8_decode, which doesn't exist.
-        throw new Exception('UTF8 not supported');
-    }
-    if ($flags & PARANOID) {
-        $input = sanitize_paranoid_string($input, $min, $max);
-    }
-    if ($flags & INT) {
-        $input = sanitize_int($input, $min, $max);
-    }
-    if ($flags & FLOAT) {
-        $input = sanitize_float($input, $min, $max);
-    }
-    if ($flags & HTML) {
-        $input = sanitize_html_string($input);
-    }
-    if ($flags & LDAP) {
-        $input = sanitize_ldap_string($input, $min, $max);
-    }
-    if ($flags & SYSTEM) {
-        $input = sanitize_system_string($input, $min, $max);
-    }
-    if ($input != $oldput) {
-        return false;
-    }
-    return true;
-}
-
 /**
  * Sanitizes a language code by removing all non-alphanumeric and non-dash characters.
  *
@@ -509,17 +421,6 @@ function sanitize_googleapikey($string)
 {
     return preg_replace('/[^A-Za-z0-9_-]/', '', trim(strval($string)));
 }
-
-function sanitize_signedint($integer, $min = '', $max = '')
-{
-    $int = (int) $integer;
-
-    if ((($min != '') && ($int < $min)) || (($max != '') && ($int > $max))) {
-        return false; // Oops! Outside limits.
-    }
-
-    return $int;
-};
 
 /**
  * Checks the validity of IP address $ip

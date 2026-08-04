@@ -748,6 +748,7 @@ function do_numerical($ia)
         'maxlength'              => $maxlength,
         'suffix'                 => $suffix,
         'placeholder'            => $placeholder,
+        'mandatory'              => $ia[6],
     ), true);
 
     $inputnames = [];
@@ -1012,7 +1013,8 @@ function do_shortfreetext($ia)
             'numberonly' => $numberonly,
             'inputsize'              => $inputsize,
             'placeholder'            => $placeholder,
-            'withColumn'             => $withColumn
+            'withColumn'             => $withColumn,
+            'mandatory'              => $ia[6],
         );
         $answer = doRender('/survey/questions/answer/shortfreetext/text/item', $itemDatas, true);
     }
@@ -1080,6 +1082,7 @@ function do_yesno($ia)
         'noAnswer' => $noAnswer,
         'value' => $_SESSION['responses_' . Yii::app()->getConfig('surveyID')][$ia[1]],
         'displayType' => $displayType,
+        'mandatory' => $ia[6],
     );
     if ($displayType === 0) {
         $answer = doRender('/survey/questions/answer/yesno/buttons/item', $itemDatas, true);
@@ -1122,6 +1125,7 @@ function do_gender($ia)
         'naChecked'              => $naChecked,
         'noAnswer'               => $noAnswer,
         'value'                  => $_SESSION['responses_' . Yii::app()->getConfig('surveyID')][$ia[1]],
+        'mandatory'              => $ia[6],
     );
 
     if ($displayType === 0) {

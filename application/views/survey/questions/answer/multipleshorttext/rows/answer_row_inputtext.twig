@@ -42,6 +42,7 @@
                     {% if inputsize %} size="{{ inputsize }}" {% endif %}
                     {% if maxlength %} maxlength="{{ maxlength }}" {% endif %}
                     {% if numbersonly %} data-number="{{ numbersonly }}" {% endif %}
+                    {% if mandatory is defined and mandatory == 'Y' %}aria-required="true" {% endif %}
             />
             {% if suffix != '' %}
                 <div class="ls-input-group-extra suffix-text suffix">

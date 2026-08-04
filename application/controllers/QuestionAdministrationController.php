@@ -737,13 +737,7 @@ class QuestionAdministrationController extends LSBaseController
      */
     public function actionGetSubquestionRowForAllLanguages($surveyid, $gid, $codes, $scale_id, $position = 0, $assessmentvisible = '')
     {
-        $oSurvey = Survey::model()->findByPk($surveyid);
-        if (empty($oSurvey)) {
-            throw new CHttpException(404, gT("Invalid survey ID"));
-        }
-        if (!Permission::model()->hasSurveyPermission($oSurvey->sid, 'surveycontent', 'update')) {
-            throw new CHttpException(403, gT("No permission"));
-        }
+        $oSurvey = $this->requireSurvey($surveyid, 'surveycontent', 'update');
         $html  = [];
         $first = true;
         $qid   = App()->getRequest()->getParam('subqid') ?? 'new' . rand(0, 99999);
@@ -809,13 +803,7 @@ class QuestionAdministrationController extends LSBaseController
      */
     public function actionGetAnswerOptionRowForAllLanguages($surveyid, $gid, $codes, $scale_id, $position = 0, $assessmentvisible = '')
     {
-        $oSurvey = Survey::model()->findByPk($surveyid);
-        if (empty($oSurvey)) {
-            throw new CHttpException(404, gT("Invalid survey ID"));
-        }
-        if (!Permission::model()->hasSurveyPermission($oSurvey->sid, 'surveycontent', 'update')) {
-            throw new CHttpException(403, gT("No permission"));
-        }
+        $oSurvey = $this->requireSurvey($surveyid, 'surveycontent', 'update');
         $html  = [];
         $first = true;
         $qid   = App()->getRequest()->getParam('subqid') ?? 'new' . rand(0, 99999);
@@ -1657,7 +1645,7 @@ class QuestionAdministrationController extends LSBaseController
     public function actionGetGeneralSettingsHTML(int $surveyId, string $questionType, ?string $questionTheme = null, $questionId = null)
     {
         if (empty($questionType)) {
-            throw new CHttpException(405, 'Internal error: No question type');
+            throw new CHttpException(405, gT('Internal error: No question type'));
         }
         // TODO: Difference between create and update permissions?
         if (!Permission::model()->hasSurveyPermission($surveyId, 'surveycontent', 'update')) {
@@ -1862,7 +1850,7 @@ class QuestionAdministrationController extends LSBaseController
     public function actionGetAdvancedSettingsHTML(int $surveyId, string $questionType, ?string $questionTheme = null, $questionId = null)
     {
         if (empty($questionType)) {
-            throw new CHttpException(405, 'Internal error: No question type');
+            throw new CHttpException(405, gT('Internal error: No question type'));
         }
         // @todo Difference between create and update permissions?
         if (!Permission::model()->hasSurveyPermission($surveyId, 'surveycontent', 'update')) {
@@ -1904,7 +1892,7 @@ class QuestionAdministrationController extends LSBaseController
     public function actionGetExtraOptionsHTML(int $surveyId, string $questionType, $questionId = null)
     {
         if (empty($questionType)) {
-            throw new CHttpException(405, 'Internal error: No question type');
+            throw new CHttpException(405, gT('Internal error: No question type'));
         }
         // @todo Difference between create and update permissions?
         if (!Permission::model()->hasSurveyPermission($surveyId, 'surveycontent', 'update')) {

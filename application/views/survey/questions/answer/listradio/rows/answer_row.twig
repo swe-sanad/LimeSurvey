@@ -17,6 +17,7 @@
         value="{{ code }}"
         name="{{ name }}"
         id="answer{{ name }}{{ code }}"
+        {% if mandatory is defined and mandatory == 'Y' %}aria-required="true"{% endif %}
         {{ checkedState }}
         onclick="if (document.getElementById('answer{{ name }}othertext') != null) document.getElementById('answer{{ name }}othertext').value='';checkconditions(this.value, this.name, this.type)"
      />

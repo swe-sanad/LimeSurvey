@@ -50,8 +50,8 @@
 
         <!-- Import result messages -->
         <div class="row justify-content-center">
-            <div class="col-lg-2">
-                <table class="table table-striped table-condensed ">
+            <div class="col-lg-2 table-responsive">
+                <table class="table table-striped table-sm">
                     <caption class="visually-hidden">
                         <?php eT("Survey copy summary"); ?>
                     </caption>
@@ -183,8 +183,8 @@
             <p class="lead"><?php echo eT('Current theme options are applied for this survey.'); ?></p>
             <h2 class="warning"><?php eT("Theme options differences"); ?>:</h2>
                 <div class="row justify-content-center">
-                    <div class="col-lg-4">
-                        <table class="table table-striped table-condensed ">
+                    <div class="col-lg-4 table-responsive">
+                        <table class="table table-striped table-sm">
                             <tr>
                                 <th class="text-center"><?php echo gT('Option'); ?></th>
                                 <th class="text-center"><?php echo gT('Current value'); ?></th>

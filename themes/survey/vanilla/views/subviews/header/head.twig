@@ -35,11 +35,20 @@
     {% if(imageSrc('./files/favicon.ico')) %}
         <link rel="shortcut icon" href="{{ imageSrc('./files/favicon.ico') }}" />
     {% endif %}
+
+    {# PWA: manifest + theme color. manifest.webmanifest lives at the install root
+       (next to index.php), so its start_url/scope resolve correctly whether
+       LimeSurvey runs at the domain root or in a subdirectory. #}
+    <link rel="manifest" href="{{ baseUrl() }}/manifest.webmanifest" />
+    <meta name="theme-color" content="#0d6efd" />
+
     <script type="text/javascript">
-        if(window.basicThemeScripts === undefined){ 
-            window.basicThemeScripts = new ThemeScripts(); 
-        } 
+        if(window.basicThemeScripts === undefined){
+            window.basicThemeScripts = new ThemeScripts();
+        }
     </script>
+
+    {{ registerScript('pwaServiceWorkerRegistration', "if ('serviceWorker' in navigator && window.isSecureContext) { window.addEventListener('load', function () { navigator.serviceWorker.register(" ~ json_encode(baseUrl() ~ '/service-worker.js') ~ ", { scope: " ~ json_encode(baseUrl() ~ '/') ~ " }).catch(function (e) { if (window.console && console.warn) { console.warn('Service worker registration failed', e); } }); }); }", "POS_END") }}
     {# LSvar update with  #}
     {{ registerScript("LSvarTemplateInit","LSvar= LSvar || {};","POS_HEAD") }}
     {% if(aSurveyInfo.options.fixnumauto and aSurveyInfo.options.fixnumauto != "off") %}

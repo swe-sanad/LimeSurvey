@@ -107,7 +107,7 @@ class InstallerController extends CController
     private function checkInstallation()
     {
         if (file_exists(APPPATH . 'config/config.php')) {
-            throw new CHttpException(500, 'Installation has been done already. Installer disabled.');
+            throw new CHttpException(500, gT('Installation has been done already. Installer disabled.'));
         }
     }
 
@@ -556,7 +556,7 @@ class InstallerController extends CController
                         $permission->save();
 
                         // Save  global settings
-                        $model->db->createCommand()->insert("{{settings_global}}", array('stg_name' => 'SessionName', 'stg_value' => $this->getRandomString()));
+                        $model->db->createCommand()->insert("{{settings_global}}", array('stg_name' => 'SessionName', 'stg_value' => getRandomString(64)));
                         $model->db->createCommand()->insert("{{settings_global}}", array('stg_name' => 'sitename', 'stg_value' => $model->siteName));
                         $model->db->createCommand()->insert("{{settings_global}}", array('stg_name' => 'siteadminname', 'stg_value' => $model->adminName));
                         $model->db->createCommand()->insert("{{settings_global}}", array('stg_name' => 'siteadminemail', 'stg_value' => $model->adminEmail));
@@ -971,7 +971,7 @@ class InstallerController extends CController
             . "\t\t" . "" . "\n"
 
             . "\t\t" . " 'session' => array (" . "\n"
-            . "\t\t\t" . "'sessionName'=>'LS-" . $this->getRandomString(16) . "'" . ",\n"
+            . "\t\t\t" . "'sessionName'=>'LS-" . getRandomString(16) . "'" . ",\n"
             . "\t\t\t" . "// Uncomment the following lines if you need table-based sessions." . "\n"
             . "\t\t\t" . "// Note: Table-based sessions are currently not supported on MSSQL server." . "\n"
             . "\t\t\t" . "// 'class' => 'application.core.web.DbHttpSession'," . "\n"
@@ -1044,22 +1044,6 @@ class InstallerController extends CController
                 Yii::app()->end();
             }
         }
-    }
-
-    /**
-     * Create a random ASCII string
-     *
-     * @return string
-     */
-    private function getRandomString($iTotalChar = 64)
-    {
-        $sResult = '';
-        for ($i = 0; $i < $iTotalChar; $i++) {
-            // Range 65-90 means A-Z, uppercase. Lowercase is between 97-122.
-            // @see http://www.asciitable.com/
-            $sResult .= chr(rand(65, 90));
-        }
-        return $sResult;
     }
 
     /**

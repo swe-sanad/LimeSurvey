@@ -96,7 +96,7 @@ class CheckIntegrity extends SurveyCommonAction
     public function fixintegrity()
     {
         if (!Permission::model()->hasGlobalPermission('settings', 'update')) {
-            throw new CHttpException(401, "401 Unauthorized");
+            throw new CHttpException(401, gT("401 Unauthorized"));
         }
         if (Yii::app()->request->getPost('ok') != 'Y') {
             throw new CHttpException(403);

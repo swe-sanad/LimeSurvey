@@ -66,7 +66,7 @@ class RegisterController extends LSYii_Controller
         $iSurveyId = $surveyid;
         $oSurvey = Survey::model()->find('sid=:sid', array(':sid' => $iSurveyId));
         if (!$oSurvey) {
-            throw new CHttpException(404, "The survey in which you are trying to participate does not seem to exist. It may have been deleted or the link you were given is outdated or incorrect.");
+            throw new CHttpException(404, gT("The survey in which you are trying to participate does not seem to exist. It may have been deleted or the link you were given is outdated or incorrect."));
         }
         // Don't test if survey allow registering .....
         $sLanguage = Yii::app()->request->getParam('lang', $oSurvey->language);
@@ -103,9 +103,9 @@ class RegisterController extends LSYii_Controller
         $sLanguage = Yii::app()->request->getParam('lang', Yii::app()->getConfig('defaultlang'));
         Yii::app()->setLanguage($sLanguage);
         if (!$oSurvey) {
-            throw new CHttpException(404, "The survey in which you are trying to participate does not seem to exist. It may have been deleted or the link you were given is outdated or incorrect.");
+            throw new CHttpException(404, gT("The survey in which you are trying to participate does not seem to exist. It may have been deleted or the link you were given is outdated or incorrect."));
         } elseif (!$oSurvey->getIsAllowRegister() || !tableExists("{{tokens_{$iSurveyId}}}")) {
-            throw new CHttpException(404, "The survey in which you are trying to register don't accept registration. It may have been updated or the link you were given is outdated or incorrect.");
+            throw new CHttpException(404, gT("The survey in which you are trying to register don't accept registration. It may have been updated or the link you were given is outdated or incorrect."));
         } elseif (!is_null($oSurvey->expires) && $oSurvey->expires < gmdate("Y-m-d H:i:s")) {
             $this->redirect(array('survey/index', 'sid' => $iSurveyId, 'lang' => $sLanguage));
         }

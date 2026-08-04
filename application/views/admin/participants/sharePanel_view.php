@@ -16,6 +16,7 @@ echo viewHelper::getViewTestTag('participantsSharePanel');
             <?php
                 $this->widget('application.extensions.admin.grid.CLSGridView', [
                     'id' => 'share_central_participants',
+                    'htmlOptions' => ['class' => 'table-responsive grid-view-ls'],
                     'dataProvider' => $model->search(),
                     'columns' => $model->columns,
                     'filter' => $model,

@@ -23,6 +23,7 @@
                 name="{{ name }}"
                 id="answer{{ name }}"
                 {% if dropdownSize %} size={{ dropdownSize }} {% endif %}
+                {% if mandatory is defined and mandatory == 'Y' %}aria-required="true"{% endif %}
                 aria-labelledby="ls-question-text-{{ basename }}"
         >
                 {# rows/option.php #}

@@ -38,7 +38,8 @@ $icon = $quotaActions[$oQuota->action]['icon'] ?? '';
         </div>
         <?php echo CHtml::encode($oQuota->name) ;?>
     </div>
-    <table class="table table-quota-items table-striped table-condensed" >
+    <div class="table-responsive">
+    <table class="table table-quota-items table-striped table-sm" >
         <thead>
             <tr>
                 <th><?php eT('Question');?></th>
@@ -70,4 +71,5 @@ $icon = $quotaActions[$oQuota->action]['icon'] ?? '';
             <?php }?>
         </tbody>
     </table>
+    </div>
 </div>
