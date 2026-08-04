@@ -35,6 +35,9 @@ class OrgInviteService
         'surveys' => ['create' => true, 'read' => true, 'update' => true, 'delete' => true, 'import' => false, 'export' => true],
         'templates' => ['create' => false, 'read' => true, 'update' => false, 'delete' => false, 'import' => false, 'export' => false],
         'labelsets' => ['create' => false, 'read' => true, 'update' => false, 'delete' => false, 'import' => false, 'export' => false],
+        // Required so the member can log in via internal DB auth (Authdb rejects a non-superadmin
+        // without 'auth_db' read). Not a privilege escalation — it only enables DB login.
+        'auth_db' => ['read' => true],
     ];
 
     /**

@@ -141,6 +141,11 @@ class InviteTest extends TestBaseClass
         $this->assertSame(1, (int) $rows['labelsets']->read_p);
         $this->assertSame(0, (int) $rows['labelsets']->update_p);
 
+        // Must be able to log in via internal DB auth: the Authdb plugin rejects any
+        // non-superadmin lacking 'auth_db' read, so the accepted member MUST have it.
+        $this->assertArrayHasKey('auth_db', $rows, 'member must have auth_db read to log in via internal DB auth');
+        $this->assertSame(1, (int) $rows['auth_db']->read_p);
+
         // Critical privilege-escalation guard: none of these permission keys
         // may ever get a row at all — not even an all-false one — for a
         // freshly accepted member.

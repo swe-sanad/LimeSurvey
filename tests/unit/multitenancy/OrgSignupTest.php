@@ -56,6 +56,11 @@ class OrgSignupTest extends TestBaseClass
         );
         $this->assertTrue(\Permission::model()->hasGlobalPermission('surveys', 'create', $user->uid));
         $this->assertTrue(\Permission::model()->hasGlobalPermission('users', 'create', $user->uid));
+        // Must be able to log in via internal DB auth (Authdb rejects a non-superadmin without it).
+        $this->assertTrue(
+            \Permission::model()->hasGlobalPermission('auth_db', 'read', $user->uid),
+            'org-admin must have auth_db read or they cannot log in via internal DB auth'
+        );
     }
 
     public function testSecondSignupCreatesADifferentOrg()

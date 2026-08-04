@@ -161,6 +161,11 @@ class OrgSignup
                 'delete' => true, 'import' => false, 'export' => true,
             ];
         }
+        // Required for the user to log in via LimeSurvey's internal DB auth (Authdb): its login
+        // check rejects any non-superadmin lacking 'auth_db' read ("Internal database
+        // authentication method is not allowed for this user"). The admin create-user flow grants
+        // this via the Authdb createNewUser plugin event, which this direct-create path bypasses.
+        $permissions['auth_db'] = ['read' => true];
         Permission::setPermissions($userId, 0, 'global', $permissions, true);
     }
 }
