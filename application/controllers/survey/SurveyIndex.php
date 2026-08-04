@@ -424,6 +424,46 @@ class SurveyIndex extends CAction
             );
         }
 
+        //VISIBILITY GATE (draft/invite/private) - additive, never loosens the checks above
+        if (!$previewmode) {
+            $sVisibilityDecision = $oSurvey->getVisibilityAccessDecision();
+            if ($sVisibilityDecision === Survey::VISIBILITY_DENY_DRAFT) {
+                $aErrors = [gT('Error')];
+                $aMessage = [
+                    gT("We are sorry but this survey is not currently available.")
+                ];
+
+                $event = new PluginEvent('onSurveyDenied');
+                $event->set('surveyId', $surveyid);
+                $event->set('reason', 'surveyNotAvailable');
+                App()->getPluginManager()->dispatchEvent($event);
+                App()->getController()->renderExitMessage(
+                    $surveyid,
+                    'survey-notavailable',
+                    $aMessage,
+                    null,
+                    $aErrors
+                );
+            } elseif ($sVisibilityDecision === Survey::VISIBILITY_DENY_PRIVATE) {
+                $aErrors = [gT('Error')];
+                $aMessage = [
+                    gT("This survey is restricted to members of its organization.")
+                ];
+
+                $event = new PluginEvent('onSurveyDenied');
+                $event->set('surveyId', $surveyid);
+                $event->set('reason', 'surveyRestrictedToOrg');
+                App()->getPluginManager()->dispatchEvent($event);
+                App()->getController()->renderExitMessage(
+                    $surveyid,
+                    'survey-restricted',
+                    $aMessage,
+                    null,
+                    $aErrors
+                );
+            }
+        }
+
         //CHECK FOR PREVIOUSLY COMPLETED COOKIE
         //If cookies are being used, and this survey has been completed, a cookie called "PHPSID[sid]STATUS" will exist (ie: SID6STATUS) and will have a value of "COMPLETE"
         $sCookieName = "LS_" . $surveyid . "_STATUS";

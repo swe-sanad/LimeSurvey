@@ -1597,9 +1597,10 @@ class SurveyRuntimeHelper
          *       > captcha may be wrong
          */
 
+        $oSurveyForScenarios = Survey::model()->findByPk($this->iSurveyid);
         $scenarios = array(
-            "tokenRequired"   => ($this->aSurveyInfo['active'] === 'Y') && (($accessMode === SurveyAccessModeService::$ACCESS_TYPE_CLOSED) || (Yii::app()->request->getParam('filltoken') === 'true')),
-            "captchaRequired" => (Survey::model()->findByPk($this->iSurveyid)->isCaptchaEnabled('surveyaccessscreen') && !isset($_SESSION['responses_' . $this->iSurveyid]['captcha_surveyaccessscreen']))
+            "tokenRequired"   => ($this->aSurveyInfo['active'] === 'Y') && (($accessMode === SurveyAccessModeService::$ACCESS_TYPE_CLOSED) || (Yii::app()->request->getParam('filltoken') === 'true') || ($oSurveyForScenarios->getVisibilityAccessDecision() === Survey::VISIBILITY_REQUIRE_TOKEN)),
+            "captchaRequired" => ($oSurveyForScenarios->isCaptchaEnabled('surveyaccessscreen') && !isset($_SESSION['responses_' . $this->iSurveyid]['captcha_surveyaccessscreen']))
         );
 
         /**
