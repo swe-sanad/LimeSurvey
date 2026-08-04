@@ -82,6 +82,35 @@ echo viewHelper::getViewTestTag('surveyPublicationOptions');
                     ]); ?>
                 </div>
             </div>
+            <!-- Survey visibility -->
+            <div class="mb-3">
+                <label class="form-label" for='visibility'><?php eT("Visibility:"); ?></label>
+                <div>
+                    <select
+                        name='visibility'
+                        id='visibility'
+                        class="form-select"
+                        aria-describedby="visibility-help"
+                    >
+                        <?php
+                        $aVisibilityOptions = [
+                            'draft'   => gT('Draft (not available)'),
+                            'public'  => gT('Public'),
+                            'invite'  => gT('Invite only (token required)'),
+                            'private' => gT('Private (organization members only)'),
+                        ];
+                        $sCurrentVisibility = $oSurvey->visibility ?: 'public';
+                        foreach ($aVisibilityOptions as $sValue => $sLabel) {
+                            $sSelected = ($sCurrentVisibility === $sValue) ? " selected='selected'" : "";
+                            echo "<option value='" . $sValue . "'" . $sSelected . ">" . $sLabel . "</option>";
+                        }
+                        ?>
+                    </select>
+                    <div id="visibility-help" class="form-text">
+                        <?php eT("Controls who can access and take this survey, in addition to the settings below."); ?>
+                    </div>
+                </div>
+            </div>
             <!-- Set cookie to prevent repeated participation -->
             <div class="mb-3">
                 <label class=" form-label" for='usecookie'><?php eT("Set cookie to prevent repeated participation:"); ?></label>

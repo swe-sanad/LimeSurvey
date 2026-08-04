@@ -269,6 +269,7 @@ class GeneralSettings
             'questionindex' => [],
             'showprogress' => ['type' => static::FIELD_TYPE_YN],
             'listpublic' => ['type' => static::FIELD_TYPE_YN],
+            'visibility' => [],
             'htmlemail' => ['type' => static::FIELD_TYPE_YN],
             'sendconfirmation' => ['type' => static::FIELD_TYPE_YN],
             'tokenanswerspersistence' => ['type' => static::FIELD_TYPE_YN],
