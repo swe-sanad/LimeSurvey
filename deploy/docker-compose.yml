@@ -1,0 +1,35 @@
+services:
+  limesurvey:
+    image: limesurvey-swe:phase1
+    container_name: limesurvey-app
+    restart: unless-stopped
+    volumes:
+      # Real config.php is created on the box from config.php.example (see README).
+      # It MUST be group-readable by the container's www-data (GID 33) — see README gotcha.
+      - /opt/apps/limesurvey/app/config.php:/var/www/html/application/config/config.php:ro
+      - limesurvey-upload:/var/www/html/upload
+    networks:
+      - proxy    # platform edge (Traefik) — external
+      - backend  # shared data plane (reach platform-postgres) — external
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: "proxy"
+      traefik.http.routers.limesurvey.rule: "Host(`surveys.swe.com.ly`)"
+      traefik.http.routers.limesurvey.entryPoints: "websecure"
+      traefik.http.routers.limesurvey.tls: "true"
+      traefik.http.routers.limesurvey.tls.certresolver: "letsencrypt"
+      traefik.http.services.limesurvey.loadbalancer.server.port: "80"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  proxy:
+    external: true
+  backend:
+    external: true
+
+volumes:
+  limesurvey-upload:
