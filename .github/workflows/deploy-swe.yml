@@ -1,0 +1,31 @@
+name: Deploy to surveys.swe.com.ly (on-box)
+
+# First-party on-box deploy. A self-hosted runner on the box runs deploy.sh, which pulls this repo,
+# builds the image on the box, migrates, and recreates the container. No registry, no tokens, no
+# webhook. Trigger: push a `deploy-v*` tag, or run manually with a ref.
+#
+# Security: this runner is root-equivalent (docker access), and this repo is PUBLIC, so triggers are
+# restricted to tag pushes + manual dispatch — never pull_request. Keep "require approval for all
+# outside collaborators" ON in Settings -> Actions so a fork PR can't add a workflow that runs here.
+
+on:
+  push:
+    tags:
+      - 'deploy-v*'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Branch or tag to build & deploy'
+        required: true
+        default: 'feat/phase1-tenancy'
+
+concurrency:
+  group: deploy-swe-limesurvey
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, limesurvey]
+    steps:
+      - name: On-box build + deploy
+        run: bash /opt/apps/limesurvey/build/deploy.sh "${{ github.event.inputs.ref || github.ref_name }}"
